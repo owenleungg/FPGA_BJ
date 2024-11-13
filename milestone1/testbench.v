@@ -7,7 +7,7 @@ module testbench;
   wire [6:0] HEX0, HEX1;
 
   // Instantiate the RNG module
-  RNG uut (
+  rng uut (
     .CLOCK_50(CLOCK_50),
     .KEY(KEY),
     .HEX0(HEX0),
