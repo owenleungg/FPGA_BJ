@@ -1,4 +1,4 @@
-module rng (
+module RNG (
   input wire CLOCK_50,           // 50MHz clock input
   input wire [1:0] KEY,          // KEY[0]: new number, KEY[1]: reset (active-low)
   output wire [6:0] HEX0, HEX1
@@ -51,26 +51,23 @@ module rng (
   char_7seg ones_display(ones, HEX0);
   char_7seg tens_display(tens, HEX1);
 
+  // LFSR with reset and new number generation
+  always @(posedge CLOCK_50) begin
+    if (~KEY[1]) begin  // Reset when KEY[1] is pressed (active low)
+      lfsr <= 5'b00010;
+      random_num <= 4'd1;
+    end else if (key_pressed) begin  // Generate new number on debounced press
+      lfsr <= {lfsr[3:0], feedback};
 
-    // Previous state of KEY[0] for edge detection
-    reg last_key_state;
-
-    // Edge detection: Look for falling edge on KEY[0]
-    always @(negedge KEY[0] or posedge KEY[1]) begin
-        if (~KEY[1]) begin  // Reset when KEY[1] is pressed (active low)
-            lfsr <= 5'b00010;
-            random_num <= 4'd1;
-        end else if (~KEY[0] && last_key_state) begin  // Detect falling edge of KEY[0]
-            lfsr <= {lfsr[3:0], feedback};  // Shift LFSR to generate new random number
-            
-            // Map LFSR output to range 1-11
-            if (lfsr[3:0] < 4'd11)
-                random_num <= lfsr[3:0] + 4'd1;
-            else
-                random_num <= 4'd1;
-        end
-        last_key_state <= KEY[0];  // Update last key state for next edge detection
+      // Map LFSR output to range 1-11
+      if (lfsr[3:0] < 4'd11)
+        random_num <= lfsr[3:0] + 4'd1;
+      else
+        random_num <= 4'd1;
     end
+  end
+
+endmodule
 
 // Module for 7-segment display decoder
 module char_7seg(
