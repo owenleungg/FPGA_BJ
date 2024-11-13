@@ -3,8 +3,11 @@
 //displays dealer score on hex2-3
 //displays state on hex 4-5
 
+//CHANGES***
 //note: no double or split logic, and dealer first card is not shown as it is displayed as 00
-//displays letter A sometimes?
+//displays letter A instead of 9?
+//player and dealer no two initial cards
+//there are ones and 11s but not both (ACE)
 //No Push result when tie
 //when player initial blackjack, dealer not given chance to tie game
 
