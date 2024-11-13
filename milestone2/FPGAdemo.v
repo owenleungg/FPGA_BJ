@@ -216,15 +216,15 @@ module blackjack_game (
 endmodule
 
 // Seven segment decoder module
-module char_7seg(
-    input [3:0] M,
-    output [6:0] Display
-);
-    assign Display[0] = ((~M[3]& ~M[2]& ~M[1]& M[0]) | (M[2]& ~M[1]& ~M[0]));
-    assign Display[1] = ((M[2]& ~M[1]& M[0]) | (M[2]& M[1]& ~M[0]));
-    assign Display[2] = ((~M[2]& M[1]& ~M[0]));
-    assign Display[3] = ((M[2]& ~M[1]& ~M[0]) | (~M[2]& ~M[1]& M[0]) | (M[2]& M[1]& M[0]));
-    assign Display[4] = ((~M[3]& M[0]) | (~M[3]& M[2]& ~M[1]));
-    assign Display[5] = ((~M[2]& M[1]& ~M[0]) | (~M[3]& ~M[2]& M[0]) | (M[1]& M[0]));
-    assign Display[6] = ((~M[3]& ~M[2]& ~M[1]) | (M[2]& M[1]& M[0]));
+module char_7seg(X, HEX);
+	input [3:0] X;
+	output [6:0] HEX;
+    
+	assign HEX[0] = (~X[3]&X[2]&~X[1]&~X[0])|(~X[3]&~X[2]&~X[1]&X[0])|(X[3]&X[2]&~X[1]&X[0])|(X[3]&~X[2]&X[1]&X[0]);
+	assign HEX[1] = (X[3]&X[2]&~X[0])|(X[3]&X[1]&X[0])|(X[2]&X[1]&~X[0])|(~X[3]&X[2]&~X[1]&X[0]);
+	assign HEX[2] = (X[3]&X[2]&~X[0])|(X[3]&X[2]&X[1])|(~X[3]&~X[2]&X[1]&~X[0]);
+	assign HEX[3] = (~X[2]&~X[1]&X[0])|(X[2]&X[1]&X[0])|(~X[3]&X[2]&~X[1]&~X[0])|(X[3]&~X[2]&X[1]&~X[0]);
+	assign HEX[4] = (~X[3]&X[0])|(~X[3]&X[2]&~X[1])|(~X[2]&~X[1]&X[0]);
+	assign HEX[5] = (~X[3]&~X[2]&X[0])|(~X[3]&~X[2]&X[1])|(~X[3]&X[1]&X[0])|(X[3]&X[2]&~X[1]&X[0]);
+	assign HEX[6] = (~X[3]&~X[2]&~X[1])|(X[3]&X[2]&~X[1]&~X[0])|(~X[3]&X[2]&X[1]&X[0]);
 endmodule
