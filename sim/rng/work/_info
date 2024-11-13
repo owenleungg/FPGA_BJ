@@ -1,0 +1,91 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dE:/ECE241/FPGA_BJ/sim/rng
+vchar_7seg
+Z1 !s110 1731522817
+!i10b 1
+!s100 ]Z:<73XbO>5jCWY0Yl57Q2
+IFlnCMJ37@UKk__he;EZ`@0
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z3 w1731522418
+Z4 8../rng.v
+Z5 F../rng.v
+L0 51
+Z6 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z7 !s108 1731522817.000000
+Z8 !s107 ../rng.v|
+Z9 !s90 -reportprogress|300|../rng.v|
+!i113 1
+Z10 tCvgOpt 0
+vRNG
+!s110 1731520626
+!i10b 1
+!s100 ?Q37A8mNoKX`:HcZSJSNK0
+IVn;5CSFU]`d1XTgkda=Fn0
+R2
+R0
+w1731518792
+R4
+R5
+L0 1
+R6
+r1
+!s85 0
+31
+!s108 1731520626.000000
+R8
+R9
+!i113 1
+R10
+n@r@n@g
+vrng
+R1
+!i10b 1
+!s100 TLB4mF>>`g6JXU7`XLZXF2
+Imgg9?55bhE4NFMMk<@zBl0
+R2
+R0
+R3
+R4
+R5
+L0 1
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+vtestbench
+R1
+!i10b 1
+!s100 I?^W;gaQAfjIzg5SQcTAR0
+I8NXdk>IiMBRb9cgLn_Hn@1
+R2
+R0
+w1731522812
+8testbench.v
+Ftestbench.v
+L0 3
+R6
+r1
+!s85 0
+31
+R7
+!s107 testbench.v|
+!s90 -reportprogress|300|testbench.v|
+!i113 1
+R10
