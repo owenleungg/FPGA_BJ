@@ -1,6 +1,6 @@
-module rng (CLOCK_50, KEY, HEX0, HEX1);
+module rng (CLOCK_50, a_key_pressed, HEX0, HEX1);
   input wire CLOCK_50;  // 50MHz clock input
-  input wire [1:0] KEY;   // KEY[0] for new number, KEY[1] for zero display
+  input wire a_key_pressed;   // a_key_pressed for new number, KEY[1] for zero display
   output wire [6:0] HEX0, HEX1;
 
   // Internal signals
@@ -16,12 +16,12 @@ module rng (CLOCK_50, KEY, HEX0, HEX1);
   // XNOR feedback for maximum length sequence
   assign feedback = ~(lfsr[4] ^ lfsr[2]);  // Taps at positions 5 and 3
    
-  // Debouncing logic for KEY[0]
+  // Debouncing logic for a_key_pressed
   assign key_pressed = (key_counter == 20'hFFFFF) && !key_was_pressed;
    
-  // Counter logic for debouncing KEY[0]
+  // Counter logic for debouncing a_key_pressed
   always @(posedge CLOCK_50) begin
-    if (KEY[0]) begin  // Key not pressed (remember, keys are active low)
+    if (a_key_pressed) begin  // Key not pressed (remember, keys are active low)
       key_counter <= 20'd0;
         key_was_pressed <= 1'b0;
     end
