@@ -9,13 +9,13 @@ z2
 cModel Technology
 Z0 dE:/ECE241/FPGA_BJ/sim/rng
 vchar_7seg
-Z1 !s110 1731522817
+Z1 !s110 1731531442
 !i10b 1
 !s100 ]Z:<73XbO>5jCWY0Yl57Q2
 IFlnCMJ37@UKk__he;EZ`@0
 Z2 VDg1SIo80bB@j0V0VzS_@n1
 R0
-Z3 w1731522418
+Z3 w1731531270
 Z4 8../rng.v
 Z5 F../rng.v
 L0 51
@@ -23,7 +23,7 @@ Z6 OV;L;10.5b;63
 r1
 !s85 0
 31
-Z7 !s108 1731522817.000000
+Z7 !s108 1731531442.000000
 Z8 !s107 ../rng.v|
 Z9 !s90 -reportprogress|300|../rng.v|
 !i113 1
@@ -52,8 +52,8 @@ n@r@n@g
 vrng
 R1
 !i10b 1
-!s100 TLB4mF>>`g6JXU7`XLZXF2
-Imgg9?55bhE4NFMMk<@zBl0
+!s100 GdgcTk9MRk>gedhS32Ffk1
+IC3?=Om@]O9Sig7Hl_ZQi80
 R2
 R0
 R3
@@ -72,11 +72,11 @@ R10
 vtestbench
 R1
 !i10b 1
-!s100 I?^W;gaQAfjIzg5SQcTAR0
-I8NXdk>IiMBRb9cgLn_Hn@1
+!s100 L<^a7V0BPd^X6O6EHo6o<2
+II6IYNBY1TlEN1C76<hDio1
 R2
 R0
-w1731522812
+w1731531439
 8testbench.v
 Ftestbench.v
 L0 3

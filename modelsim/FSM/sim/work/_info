@@ -1,0 +1,110 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dE:/ECE241/FPGA_BJ/modelsim/FSM/sim
+vblackjack_fsm
+Z1 !s110 1731537462
+!i10b 1
+!s100 @FZ`=PST6iIZB4A:S4PlS1
+IZi<j_lDFFA6?hhDGSNjSZ2
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+Z3 dE:/ECE241/FPGA_BJ/modelsim/fsm/sim
+Z4 w1731537457
+Z5 8../blackjack_fsm.v
+Z6 F../blackjack_fsm.v
+L0 1
+Z7 OV;L;10.5b;63
+r1
+!s85 0
+31
+Z8 !s108 1731537462.000000
+Z9 !s107 ../blackjack_fsm.v|../top.v|
+Z10 !s90 -reportprogress|300|../top.v|../blackjack_fsm.v|
+!i113 1
+Z11 tCvgOpt 0
+vchar_7seg
+R1
+!i10b 1
+!s100 8S8OlJjefbmihUZ?Q=RLA2
+IWbZLU8baE[1Z`noKz0@8K3
+R2
+R3
+R4
+R5
+R6
+L0 160
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 1
+R11
+vrng
+!s110 1731534696
+!i10b 1
+!s100 hD_P1mD1@K2XKzIAg2^Dj2
+I1zXIi`:NLa3@=D8Uc?F1J2
+R2
+R0
+w1731534314
+8../rng.v
+F../rng.v
+L0 1
+R7
+r1
+!s85 0
+31
+!s108 1731534696.000000
+!s107 ../char_7seg.v|../blackjack_fsm.v|../rng.v|../top.v|
+!s90 -reportprogress|300|../top.v|../rng.v|../blackjack_fsm.v|../char_7seg.v|
+!i113 1
+R11
+vtestbench
+R1
+!i10b 1
+!s100 MC<DcLH:Y?>1259f=TXXl1
+I^?^:7Y_V5:clLIm7E[3oo1
+R2
+R3
+w1731537072
+8testbench.v
+Ftestbench.v
+L0 3
+R7
+r1
+!s85 0
+31
+R8
+!s107 testbench.v|
+!s90 -reportprogress|300|testbench.v|
+!i113 1
+R11
+vtop
+R1
+!i10b 1
+!s100 A1M:R0Sb1JiHH@jXo@fFA1
+IlMomC3BG9_AD3ffm;IBHg2
+R2
+R3
+w1731536925
+8../top.v
+F../top.v
+L0 1
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 1
+R11

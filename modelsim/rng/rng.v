@@ -6,7 +6,7 @@ module rng (
 
   // Internal signals
   reg [4:0] lfsr = 5'b00010;     // 5-bit LFSR with non-zero initial state
-  reg [3:0] random_num;          // Current random number (1-11)
+  reg [3:0] current_card;          // Current random number (1-11)
   wire feedback;                 // LFSR feedback signal
 
   // Feedback for maximal length sequence (taps at positions 5 and 3)
@@ -16,11 +16,11 @@ module rng (
   reg [3:0] ones;
   reg [3:0] tens;
   always @(*) begin
-    if (random_num <= 4'd9) begin
-      ones = random_num;
+    if (current_card <= 4'd9) begin
+      ones = current_card;
       tens = 4'd0;
     end else begin
-      ones = random_num - 4'd10;
+      ones = current_card - 4'd10;
       tens = 4'd1;
     end
   end
@@ -33,15 +33,15 @@ module rng (
   always @(posedge CLOCK_50) begin
     if (~KEY[1]) begin  // Reset when KEY[1] is pressed (active low)
       lfsr <= 5'b00010;
-      random_num <= 4'd1;
-    end else if (~KEY[0]) begin  // Generate new number when KEY[0] is low
+      current_card <= 4'd0;
+    end 
+    else begin 
       lfsr <= {lfsr[3:0], feedback};
-
       // Map LFSR output to range 1-11
       if (lfsr[3:0] < 4'd11)
-        random_num <= lfsr[3:0] + 4'd1;
+        current_card <= lfsr[3:0] + 4'd1;
       else
-        random_num <= 4'd1;
+        current_card <= 4'd1;
     end
   end
 

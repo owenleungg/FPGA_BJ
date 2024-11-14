@@ -3,14 +3,18 @@ module blackjack_fsm (
     input wire [3:0] KEY,          // KEY[0]=hit, KEY[1]=stand, KEY[2]=reset
     output wire [4:0] player_score,    // Up to 21
     output wire [4:0] dealer_score,    // Up to 21
+    output wire [6:0] HEX0,        // Player score ones digit
+    output wire [6:0] HEX1,        // Player score tens digit
+    output wire [6:0] HEX2,        // Dealer score ones digit
+    output wire [6:0] HEX3,        // Dealer score tens digit
+    output wire [6:0] HEX4,        // Status display (P/d/b)
+    output wire [6:0] HEX5         // Game state indicator
 );
 
     // Internal signals
-    wire [4:0] player_score;
-    wire [4:0] dealer_score;
     wire [3:0] card_value;
     wire dealing_cards, player_active, dealer_active, game_finished;
-    output reg current_card;
+    wire [3:0] current_card;
 
     // Game state signals
     reg [2:0] current_state;
@@ -31,6 +35,15 @@ module blackjack_fsm (
         .KEY(KEY),
         .current_card(current_card)  // Output from rng used as card value
     );
+
+    // Score conversion for display
+    wire [3:0] player_ones, player_tens;
+    wire [3:0] dealer_ones, dealer_tens;
+    
+    assign player_ones = player_score_reg % 10;
+    assign player_tens = player_score_reg / 10;
+    assign dealer_ones = dealer_score_reg % 10;
+    assign dealer_tens = dealer_score_reg / 10;
 
     // Game state machine
     always @(posedge CLOCK_50 or negedge KEY[2]) begin
@@ -104,4 +117,55 @@ module blackjack_fsm (
             end
         endcase
     end
+
+    
+    // Seven segment display module instances
+    char_7seg player_ones_display(player_ones, HEX0);
+    char_7seg player_tens_display(player_tens, HEX1);
+    char_7seg dealer_ones_display(dealer_ones, HEX2);
+    char_7seg dealer_tens_display(dealer_tens, HEX3);
+    
+    // Status display on HEX4
+    reg [6:0] status_display;
+    always @(*) begin
+        case (current_state)
+            IDLE: status_display = 7'b1111111;      // Blank
+            DEALING: status_display = 7'b0100001;   // d
+            PLAYER_TURN: status_display = 7'b0001100; // P
+            DEALER_TURN: status_display = 7'b0100001; // d
+            GAME_OVER: begin
+                if (player_score_reg > 21)
+                    status_display = 7'b0000011;    // b (bust)
+                else if (dealer_score_reg > 21 || 
+                       (player_score_reg > dealer_score_reg && player_score_reg <= 21))
+                    status_display = 7'b0001100;    // P (player wins)
+                else
+                    status_display = 7'b0100001;    // d (dealer wins)
+            end
+            default: status_display = 7'b1111111;   // Blank
+        endcase
+    end
+    assign HEX4 = status_display;
+    
+    // Game state indicator on HEX5
+    assign HEX5 = (current_state == IDLE) ? 7'b1111001 :     // 1
+                  (current_state == DEALING) ? 7'b0100100 :   // 2
+                  (current_state == PLAYER_TURN) ? 7'b0110000 : // 3
+                  (current_state == DEALER_TURN) ? 7'b0011001 : // 4
+                  7'b0010010;                                   // 5 (GAME_OVER)
+
+endmodule
+
+// Seven segment decoder module
+module char_7seg(X, HEX);
+	input [3:0] X;
+	output [6:0] HEX;
+    
+	assign HEX[0] = (~X[3]&X[2]&~X[1]&~X[0])|(~X[3]&~X[2]&~X[1]&X[0])|(X[3]&X[2]&~X[1]&X[0])|(X[3]&~X[2]&X[1]&X[0]);
+	assign HEX[1] = (X[3]&X[2]&~X[0])|(X[3]&X[1]&X[0])|(X[2]&X[1]&~X[0])|(~X[3]&X[2]&~X[1]&X[0]);
+	assign HEX[2] = (X[3]&X[2]&~X[0])|(X[3]&X[2]&X[1])|(~X[3]&~X[2]&X[1]&~X[0]);
+	assign HEX[3] = (~X[2]&~X[1]&X[0])|(X[2]&X[1]&X[0])|(~X[3]&X[2]&~X[1]&~X[0])|(X[3]&~X[2]&X[1]&~X[0]);
+	assign HEX[4] = (~X[3]&X[0])|(~X[3]&X[2]&~X[1])|(~X[2]&~X[1]&X[0]);
+	assign HEX[5] = (~X[3]&~X[2]&X[0])|(~X[3]&~X[2]&X[1])|(~X[3]&X[1]&X[0])|(X[3]&X[2]&~X[1]&X[0]);
+	assign HEX[6] = (~X[3]&~X[2]&~X[1])|(X[3]&X[2]&~X[1]&~X[0])|(~X[3]&X[2]&X[1]&X[0]);
 endmodule
