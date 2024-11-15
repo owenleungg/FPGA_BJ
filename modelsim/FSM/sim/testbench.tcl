@@ -5,7 +5,7 @@ quit -sim
 vlib work
 
 # compile the Verilog source code in the parent folder
-vlog ../top.v ../blackjack_fsm.v
+vlog ../blackjack_top.v
 
 # compile the Verilog code of the testbench
 vlog *.v

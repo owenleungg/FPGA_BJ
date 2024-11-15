@@ -32,6 +32,6 @@ initial begin
   #10 KEY[2] <= 1'b1;
 end // initial
 
-top n(CLOCK_50, KEY);
+blackjack_top n(CLOCK_50, KEY, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5);
 
 endmodule
