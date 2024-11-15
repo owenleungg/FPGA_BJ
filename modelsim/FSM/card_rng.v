@@ -5,14 +5,14 @@ module card_rng (
 );
 
   // Internal signals
-  reg [4:0] lfsr = 5'b00010;     // 5-bit LFSR with non-zero initial state
+  reg [15:0] lfsr = 15'b00010;     // 5-bit LFSR with non-zero initial state
   wire feedback;    
    // Feedback for maximal length sequence (taps at positions 5 and 3)
-  assign feedback = ~(lfsr[4] ^ lfsr[2]);
+  assign feedback = lfsr[15] ^ lfsr[14] ^ lfsr[12] ^ lfsr[3];
 
   // LFSR with reset and new number generation
   always @(posedge clk) begin
-  lfsr <= {lfsr[3:0], feedback};
+  lfsr <= {lfsr[15:0], feedback};
       case (lfsr[3:0])
          4'b0000: card_value <= 4'd1;  // Ace
          4'b0010: card_value <= 4'd2;

@@ -21,6 +21,7 @@ module blackjack_top (
     // RNG Module
     card_rng rng_inst (
         .clk(CLOCK_50),
+        .rst_n(KEY[3]),
         .card_value(card_value)
     );
 
@@ -83,6 +84,7 @@ endmodule
 // RNG Module for card generation
 module card_rng (
     input wire clk,
+    input wire rst_n,
     output reg [3:0] card_value
 );
     reg [15:0] lfsr;  // Increased LFSR width for better randomization
@@ -92,20 +94,26 @@ module card_rng (
     assign feedback = lfsr[15] ^ lfsr[14] ^ lfsr[12] ^ lfsr[3];
 
     always @(posedge clk or negedge rst_n) begin
-    lfsr <= {lfsr[14:0], feedback};
-        // Use more bits of LFSR for value generation
-        case (lfsr[3:0])
-            4'b0000, 4'b0001: card_value <= 4'd1;  // Ace
-            4'b0010, 4'b0011: card_value <= 4'd2;
-            4'b0100, 4'b0101: card_value <= 4'd3;
-            4'b0110, 4'b0111: card_value <= 4'd4;
-            4'b1000, 4'b1001: card_value <= 4'd5;
-            4'b1010, 4'b1011: card_value <= 4'd6;
-            4'b1100: card_value <= 4'd7;
-            4'b1101: card_value <= 4'd8;
-            4'b1110: card_value <= 4'd9;
-            4'b1111: card_value <= 4'd10; // 10 or face card
-        endcase
+        if (!rst_n) begin
+            lfsr <= 16'hACE1;  // Non-zero seed value
+            card_value <= 4'd0;
+        end
+        else begin
+            lfsr <= {lfsr[14:0], feedback};
+            // Use more bits of LFSR for value generation
+            case (lfsr[3:0])
+                4'b0000, 4'b0001: card_value <= 4'd1;  // Ace
+                4'b0010, 4'b0011: card_value <= 4'd2;
+                4'b0100, 4'b0101: card_value <= 4'd3;
+                4'b0110, 4'b0111: card_value <= 4'd4;
+                4'b1000, 4'b1001: card_value <= 4'd5;
+                4'b1010, 4'b1011: card_value <= 4'd6;
+                4'b1100: card_value <= 4'd7;
+                4'b1101: card_value <= 4'd8;
+                4'b1110: card_value <= 4'd9;
+                4'b1111: card_value <= 4'd10; // 10 or face card
+            endcase
+        end
     end
 endmodule
 

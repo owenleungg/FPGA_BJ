@@ -5,7 +5,7 @@ quit -sim
 vlib work
 
 # compile the Verilog source code in the parent folder
-vlog ../blackjack_top.v
+vlog ../blackjack_top.v ../blackjack_fsm.v ../button_debouncer.v ../char_7seg.v ../card_rng.v
 
 # compile the Verilog code of the testbench
 vlog *.v
@@ -17,4 +17,4 @@ vsim work.testbench -Lf 220model -Lf altera_mf_ver -Lf verilog
 do wave.do
 
 # advance the simulation the desired amount of time
-run 200 ns
+run 1000 ns
