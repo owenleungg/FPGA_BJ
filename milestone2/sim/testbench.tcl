@@ -5,7 +5,7 @@ quit -sim
 vlib work
 
 # compile the Verilog source code in the parent folder
-vlog ../../../src/verilog/ps2/PS2_Controller.v ../../../src/verilog/ps2/Altera_UP_PS2_Data_In.v ../../../src/verilog/ps2/Altera_UP_PS2_Command_Out.v ../../../src/verilog/game_logic/blackjack_top.v ../../../src/verilog/game_logic/blackjack_fsm.v ../../../src/verilog/game_logic/button_debouncer.v ../../../src/verilog/game_logic/char_7seg.v ../../../src/verilog/game_logic/card_rng.v
+vlog ../FPGAdemo_ver2.v
 
 # compile the Verilog code of the testbench
 vlog *.v

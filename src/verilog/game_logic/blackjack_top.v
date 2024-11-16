@@ -14,7 +14,7 @@ module blackjack_top (
     wire [3:0] card_value;
     wire [4:0] player_score, dealer_score;
     wire [2:0] game_state;
-    wire hit_pressed, stand_pressed, deal_pressed;
+    reg hit_pressed, stand_pressed, deal_pressed;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
@@ -34,7 +34,7 @@ module blackjack_top (
         .card_value(card_value)
     );
 
-    // Button debouncer
+    //Button debouncer
     button_debouncer debouncer_inst (
         .clk(CLOCK_50),
         .rst_n(KEY[2]),

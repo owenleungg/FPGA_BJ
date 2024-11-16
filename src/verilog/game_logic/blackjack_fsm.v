@@ -22,7 +22,7 @@ module blackjack_fsm (
     reg [2:0] cards_dealt;
     reg [4:0] player_first_two;
     reg [4:0] dealer_first_two;
-	 reg [4:0] new_score;
+	reg [4:0] new_score;
     reg player_has_ace;
     reg dealer_has_ace;
     reg dealing_complete;

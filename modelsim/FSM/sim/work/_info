@@ -8,126 +8,189 @@ z2
 !i10f 100
 cModel Technology
 Z0 dE:/ECE241/FPGA_BJ/modelsim/FSM/sim
-vblackjack_fsm
-Z1 !s110 1731652090
+vAltera_UP_PS2_Command_Out
+Z1 !s110 1731738375
 !i10b 1
-!s100 ckZIaR2Hi:T?9=eQc0nb]2
-I]aN7GZfhF`zlg9R@>mI]21
+!s100 ZjDIV:z^W4aE7ECD]ReVK0
+IKB=RCEn[<`KjaH3>J;S7S1
 Z2 VDg1SIo80bB@j0V0VzS_@n1
-Z3 dC:/ece241/final_project/fpGA_BJ/modelsim/FSM/sim
-Z4 w1731650288
-Z5 8../blackjack_fsm.v
-Z6 F../blackjack_fsm.v
-L0 2
-Z7 OV;L;10.5b;63
+Z3 dC:/ece241/final_project/fPGA_BJ/modelsim/fsM/sim
+Z4 w1731461628
+8../../../src/verilog/ps2/Altera_UP_PS2_Command_Out.v
+F../../../src/verilog/ps2/Altera_UP_PS2_Command_Out.v
+Z5 L0 10
+Z6 OV;L;10.5b;63
 r1
 !s85 0
 31
-Z8 !s108 1731652090.000000
-Z9 !s107 ../card_rng.v|../char_7seg.v|../button_debouncer.v|../blackjack_fsm.v|../blackjack_top.v|
-Z10 !s90 -reportprogress|300|../blackjack_top.v|../blackjack_fsm.v|../button_debouncer.v|../char_7seg.v|../card_rng.v|
+Z7 !s108 1731738374.000000
+Z8 !s107 ../../../src/verilog/game_logic/card_rng.v|../../../src/verilog/game_logic/char_7seg.v|../../../src/verilog/game_logic/button_debouncer.v|../../../src/verilog/game_logic/blackjack_fsm.v|../../../src/verilog/game_logic/blackjack_top.v|../../../src/verilog/ps2/Altera_UP_PS2_Command_Out.v|../../../src/verilog/ps2/Altera_UP_PS2_Data_In.v|../../../src/verilog/ps2/PS2_Controller.v|
+Z9 !s90 -reportprogress|300|../../../src/verilog/ps2/PS2_Controller.v|../../../src/verilog/ps2/Altera_UP_PS2_Data_In.v|../../../src/verilog/ps2/Altera_UP_PS2_Command_Out.v|../../../src/verilog/game_logic/blackjack_top.v|../../../src/verilog/game_logic/blackjack_fsm.v|../../../src/verilog/game_logic/button_debouncer.v|../../../src/verilog/game_logic/char_7seg.v|../../../src/verilog/game_logic/card_rng.v|
 !i113 1
-Z11 tCvgOpt 0
+Z10 tCvgOpt 0
+n@altera_@u@p_@p@s2_@command_@out
+vAltera_UP_PS2_Data_In
+R1
+!i10b 1
+!s100 ee^TmQcGZ[E_>UMojW[Zg0
+IS@EWdFbi9CbFhV[mgg@^<3
+R2
+R3
+R4
+8../../../src/verilog/ps2/Altera_UP_PS2_Data_In.v
+F../../../src/verilog/ps2/Altera_UP_PS2_Data_In.v
+R5
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+n@altera_@u@p_@p@s2_@data_@in
+vblackjack_fsm
+R1
+!i10b 1
+!s100 ckZIaR2Hi:T?9=eQc0nb]2
+IPWCgZae@9nj7b?_C7aPhQ3
+R2
+R3
+Z11 w1731730654
+Z12 8../../../src/verilog/game_logic/blackjack_fsm.v
+Z13 F../../../src/verilog/game_logic/blackjack_fsm.v
+L0 2
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
 vblackjack_top
 R1
 !i10b 1
-!s100 3j9^MLaF`PIUngWfKcf;g3
-IjCJXIC@b[Ihfkkn^7c0E22
+!s100 @>fcT1PejjZE<F>WNRU2_3
+I85G6FL0b<8jmoIm`ccoj41
 R2
 R3
-w1731649455
-8../blackjack_top.v
-F../blackjack_top.v
+w1731731330
+8../../../src/verilog/game_logic/blackjack_top.v
+F../../../src/verilog/game_logic/blackjack_top.v
 L0 2
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
 vbutton_debouncer
 R1
 !i10b 1
 !s100 GOQ][8?ceh^FX=HLCVLAC2
-IM0Qh2Xm[Zhj3O@CFQ`M`]1
+I4meI0TE>Kh4@kezaTMz@_1
 R2
 R3
 w1731649469
-8../button_debouncer.v
-F../button_debouncer.v
+8../../../src/verilog/game_logic/button_debouncer.v
+F../../../src/verilog/game_logic/button_debouncer.v
 L0 2
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
 vcard_rng
 R1
 !i10b 1
-!s100 :UPVLf1@zM5[[lT1jYnVY3
-INj;9U0;J6c>g0m3@_0g0>1
+!s100 K<jYbbbhN^j5I1Vb`4^:O0
+I5M9U@Q[MeO4`CHkQKa:Ok0
 R2
 R3
-w1731652087
-8../card_rng.v
-F../card_rng.v
+R11
+8../../../src/verilog/game_logic/card_rng.v
+F../../../src/verilog/game_logic/card_rng.v
 L0 2
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
 vchar_7seg
 R1
 !i10b 1
 !s100 :gPL;]6gP;0?o8nfn`Sj[3
-IlbH=ziQE`QWUgT<EWm<S<1
+IIhRak;4GTDEAc0YdTeflf3
 R2
 R3
 w1731649483
-8../char_7seg.v
-F../char_7seg.v
+8../../../src/verilog/game_logic/char_7seg.v
+F../../../src/verilog/game_logic/char_7seg.v
 L0 1
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
 vdisplay_controller
 R1
 !i10b 1
 !s100 dLQQZUIAeTN@>MV6U_TcV0
-I1OB1<DG9iLUVSzNihj55n0
+IDiH]UfZjCUGllZ:hCo6I23
 R2
 R3
-R4
-R5
-R6
+R11
+R12
+R13
 L0 185
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
+vPS2_Controller
+R1
+!i10b 1
+!s100 SW^kfR2G?OzmGJd;26e1I1
+IRji7E:6RD6dRf?o[ck>io1
+R2
+R3
+w1731731266
+8../../../src/verilog/ps2/PS2_Controller.v
+F../../../src/verilog/ps2/PS2_Controller.v
+L0 9
+R6
+r1
+!s85 0
+31
+R7
+R8
+R9
+!i113 1
+R10
+n@p@s2_@controller
 vrng
 !s110 1731534696
 !i10b 1
@@ -139,7 +202,7 @@ w1731534314
 8../rng.v
 F../rng.v
 L0 1
-R7
+R6
 r1
 !s85 0
 31
@@ -147,27 +210,27 @@ r1
 !s107 ../char_7seg.v|../blackjack_fsm.v|../rng.v|../top.v|
 !s90 -reportprogress|300|../top.v|../rng.v|../blackjack_fsm.v|../char_7seg.v|
 !i113 1
-R11
+R10
 vscore_converter
 R1
 !i10b 1
 !s100 jJ_cY=]MjkQ2<@6]l_`6Z3
-I[FP1lj9ei7iag[YdeLn8X0
+Ig1z`[7??<68YETNAd:z[[2
 R2
 R3
-R4
-R5
-R6
+R11
+R12
+R13
 L0 169
-R7
+R6
 r1
 !s85 0
 31
+R7
 R8
 R9
-R10
 !i113 1
-R11
+R10
 vtestbench
 R1
 !i10b 1
@@ -179,15 +242,15 @@ w1731649775
 8testbench.v
 Ftestbench.v
 L0 3
-R7
+R6
 r1
 !s85 0
 31
-R8
+!s108 1731738375.000000
 !s107 testbench.v|
 !s90 -reportprogress|300|testbench.v|
 !i113 1
-R11
+R10
 vtop
 !s110 1731537462
 !i10b 1
@@ -199,7 +262,7 @@ w1731536925
 8../top.v
 F../top.v
 L0 1
-R7
+R6
 r1
 !s85 0
 31
@@ -207,4 +270,4 @@ r1
 !s107 ../blackjack_fsm.v|../top.v|
 !s90 -reportprogress|300|../top.v|../blackjack_fsm.v|
 !i113 1
-R11
+R10
