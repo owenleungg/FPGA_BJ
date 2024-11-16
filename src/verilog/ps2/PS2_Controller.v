@@ -30,25 +30,6 @@ module PS2_Controller #(parameter INITIALIZE_MOUSE = 0) (
  *                           Parameter Declarations                          *
  *****************************************************************************/
 
-// Define the scan code for "A"
-localparam A_KEY_CODE = 8'h1C;
-
-// Signal to activate a specific action when "A" is pressed
-reg a_key_pressed;
-
-// Check for "A" key press
-always @(posedge CLOCK_50 or posedge reset) begin
-    if (reset) begin
-        a_key_pressed <= 1'b0;
-    end
-    else if (received_data_en) begin
-        if (received_data == A_KEY_CODE) begin
-            a_key_pressed <= 1'b1;  // Set flag for "A" key press
-        end else begin
-            a_key_pressed <= 1'b0;
-        end
-    end
-end
 
 /*****************************************************************************
  *                             Port Declarations                             *

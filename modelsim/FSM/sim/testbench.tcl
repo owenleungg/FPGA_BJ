@@ -5,7 +5,7 @@ quit -sim
 vlib work
 
 # compile the Verilog source code in the parent folder
-vlog ../blackjack_top.v ../blackjack_fsm.v ../button_debouncer.v ../char_7seg.v ../card_rng.v
+vlog ../../../src/verilog/game_logic/blackjack_top.v ../../../src/verilog/game_logic/blackjack_fsm.v ../../../src/verilog/game_logic/button_debouncer.v ../../../src/verilog/game_logic/char_7seg.v ../../../src/verilog/game_logic/card_rng.v
 
 # compile the Verilog code of the testbench
 vlog *.v

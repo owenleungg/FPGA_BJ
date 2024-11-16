@@ -18,6 +18,16 @@ module blackjack_top (
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
+    // PS/2 Controller signals
+    wire ps2_clk;
+    wire ps2_dat;
+    wire [7:0] received_data;
+    wire received_data_en;
+    wire command_was_sent;
+    wire error_communication_timed_out;
+    wire [7:0] the_command = 8'h00; // Default command not used here
+    wire send_command = 1'b0;      // No commands sent in this design
+
     // RNG Module
     card_rng rng_inst (
         .clk(CLOCK_50),
@@ -77,6 +87,45 @@ module blackjack_top (
         .HEX4(HEX4),
         .HEX5(HEX5)
     );
+
+    // Instantiate the PS/2 Controller
+    PS2_Controller ps2_controller_inst (
+        .CLOCK_50(CLOCK_50),
+        .reset(KEY[2]),
+
+        .the_command(the_command),
+        .send_command(send_command),
+
+        .PS2_CLK(ps2_clk),
+        .PS2_DAT(ps2_dat),
+
+        .command_was_sent(command_was_sent),
+        .error_communication_timed_out(error_communication_timed_out),
+
+        .received_data(received_data),
+        .received_data_en(received_data_en)
+    );
+
+    // Keyboard input mapping
+    always @(posedge CLOCK_50 or posedge KEY[2]) begin
+        if (KEY[2]) begin
+            hit_pressed <= 1'b0;
+            stand_pressed <= 1'b0;
+            deal_pressed <= 1'b0;
+        end else if (received_data_en) begin
+            case (received_data)
+                8'h23: hit_pressed <= 1'b1;   // Example key for hit (e.g., "H" key)
+                8'h1B: stand_pressed <= 1'b1; // Example key for stand (e.g., "S" key)
+                8'h2D: deal_pressed <= 1'b1;  // Example key for deal (e.g., "D" key)
+                default: begin
+                    hit_pressed <= 1'b0;
+                    stand_pressed <= 1'b0;
+                    deal_pressed <= 1'b0;
+                end
+            endcase
+        end
+    end
+    
 
 endmodule
 
