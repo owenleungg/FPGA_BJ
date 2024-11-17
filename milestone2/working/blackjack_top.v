@@ -1,7 +1,7 @@
 // Top-level module
 module blackjack_top (
     input wire CLOCK_50,
-    input wire [3:0] KEY,          // KEY[0]=hit, KEY[1]=stand, KEY[2]=reset, KEY[3]=start/deal
+    input wire [2:0] KEY,          // KEY[0]=hit, KEY[1]=stand, KEY[2]=reset, KEY[3]=start/deal
     output wire [6:0] HEX0,        // Player score ones digit
     output wire [6:0] HEX1,        // Player score tens digit
     output wire [6:0] HEX2,        // Dealer score ones digit
@@ -14,7 +14,7 @@ module blackjack_top (
     wire [3:0] card_value;
     wire [4:0] player_score, dealer_score;
     wire [2:0] game_state;
-    wire hit_pressed, stand_pressed, deal_pressed;
+    reg hit_pressed, stand_pressed, deal_pressed;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
@@ -24,18 +24,25 @@ module blackjack_top (
         .card_value(card_value)
     );
 
-    // Button debouncer
-    button_debouncer debouncer_inst (
-        .clk(CLOCK_50),
-        .rst_n(KEY[2]),
-        .key_hit(KEY[0]),
-        .key_stand(KEY[1]),
-        .key_deal(KEY[3]),
-        .hit_pressed(hit_pressed),
-        .stand_pressed(stand_pressed),
-        .deal_pressed(deal_pressed)
-    );
+    // // Button debouncer
+    // button_debouncer debouncer_inst (
+    //     .clk(CLOCK_50),
+    //     .rst_n(KEY[2]),
+    //     .key_hit(KEY[0]),
+    //     .key_stand(KEY[1]),
+    //     .key_deal(KEY[3]),
+    //     .hit_pressed(hit_pressed),
+    //     .stand_pressed(stand_pressed),
+    //     .deal_pressed(deal_pressed)
+    // );
 
+    always @ (*)
+        begin
+            hit_pressed <= KEY[0];
+            stand_pressed <= KEY[1];
+            deal_pressed <= KEY [2];
+        end
+        
     // Main game FSM
     blackjack_fsm fsm_inst (
         .clk(CLOCK_50),
