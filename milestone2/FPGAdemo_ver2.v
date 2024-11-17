@@ -95,23 +95,23 @@ module card_rng (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            lfsr <= 16'hACE1;  // Non-zero seed value
+            lfsr <= 16'hACE1;  // Seed value
             card_value <= 4'd0;
         end
         else begin
             lfsr <= {lfsr[14:0], feedback};
             // Use more bits of LFSR for value generation
             case (lfsr[3:0])
-                4'b0000, 4'b0001: card_value <= 4'd1;  // Ace
-                4'b0010, 4'b0011: card_value <= 4'd2;
-                4'b0100, 4'b0101: card_value <= 4'd3;
-                4'b0110, 4'b0111: card_value <= 4'd4;
-                4'b1000, 4'b1001: card_value <= 4'd5;
-                4'b1010, 4'b1011: card_value <= 4'd6;
-                4'b1100: card_value <= 4'd7;
-                4'b1101: card_value <= 4'd8;
-                4'b1110: card_value <= 4'd9;
-                4'b1111: card_value <= 4'd10; // 10 or face card
+                4'b0000: card_value <= 4'd1;  // Ace
+                4'b0010: card_value <= 4'd2;
+                4'b0100: card_value <= 4'd3;
+                4'b0001: card_value <= 4'd4;
+                4'b0011: card_value <= 4'd5;
+                4'b0101: card_value <= 4'd6;
+                4'b0110: card_value <= 4'd7;
+                4'b0111: card_value <= 4'd8;
+                4'b1000: card_value <= 4'd9;
+                4'b1001, 4'b1010, 4'b1011, 4'b1100, 4'b1101, 4'b1110, 4'b1111: card_value <= 4'd10; // 10 or face card
             endcase
         end
     end
@@ -205,10 +205,9 @@ module blackjack_fsm (
     reg player_has_ace;
     reg dealer_has_ace;
     reg dealing_complete;
-    reg player_busted;  // New register to track player bust
+    reg player_busted; 
     reg [4:0] new_score;
     
-    // Card value adjustment for aces - unchanged
     function [4:0] adjust_for_ace;
         input [4:0] current_score;
         input [3:0] new_card;

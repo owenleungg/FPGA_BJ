@@ -7,6 +7,7 @@ module card_rng (
   // Internal signals
   reg [15:0] lfsr = 15'b00010;     // 5-bit LFSR with non-zero initial state
   wire feedback;    
+  
    // Feedback for maximal length sequence (taps at positions 5 and 3)
   assign feedback = lfsr[15] ^ lfsr[14] ^ lfsr[12] ^ lfsr[3];
 

@@ -26,9 +26,8 @@ module blackjack_fsm (
     reg player_has_ace;
     reg dealer_has_ace;
     reg dealing_complete;
-    reg player_busted;  // New register to track player bust
+    reg player_busted;  // Register to track player bust
     
-    // Card value adjustment for aces - unchanged
     function [4:0] adjust_for_ace;
         input [4:0] current_score;
         input [3:0] new_card;
