@@ -1,3 +1,5 @@
+//Dont really know if this works and how to really test it but
+
 module vga_blackjack_display #(
     parameter H_RES = 640,
     parameter V_RES = 480,
