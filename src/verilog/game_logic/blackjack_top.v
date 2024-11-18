@@ -9,7 +9,8 @@ module blackjack_top (
     output wire [6:0] HEX2,        // Dealer score ones digit
     output wire [6:0] HEX3,        // Dealer score tens digit
     output wire [6:0] HEX4,        // Status display (P/d/b/t)
-    output wire [6:0] HEX5         // Game state indicator
+    output wire [6:0] HEX5,         // Game state indicator
+    output wire [9:0] LEDR
 );
 
     // Internal connections
@@ -20,13 +21,13 @@ module blackjack_top (
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
-    // Replaced Debouncer
-    always @ (*)
-    begin
-        hit_pressed <= KEY[0];
-        stand_pressed <= KEY[1];
-        deal_pressed <= KEY [2];
-    end
+    // // Replaced Debouncer
+    // always @ (*)
+    // begin
+    //     hit_pressed <= KEY[0];
+    //     stand_pressed <= KEY[1];
+    //     deal_pressed <= KEY [2];
+    // end
         
     // Instantiate the PS/2 module
     blackjack_ps2 ps2_inst(
@@ -36,6 +37,7 @@ module blackjack_top (
         .hit_pressed(hit_pressed),
         .stand_pressed(stand_pressed),
         .deal_pressed(deal_pressed)
+        .LEDR(LEDR)
     )
 
     // RNG Module

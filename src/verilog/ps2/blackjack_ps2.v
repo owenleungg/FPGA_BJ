@@ -5,6 +5,7 @@ module blackjack_ps2(
     output reg hit_pressed,
     output reg stand_pressed,
     output reg deal_pressed,
+    output reg [9:0] LEDR,
 );
 
     wire received_data_en, received_data;
@@ -22,19 +23,31 @@ module blackjack_ps2(
     always @(posedge CLOCK_50) 
     begin
         case (received_data)
-            8'h33: begin
-                if (received_data_en && received_data == 8'h33) begin  // 'H' key make code
-                    hit_pressed <= 1'b1;
-                end
+            8'h33: begin // H key
+                hit_pressed <= 1'b1;    
+                LEDR[0] <= 1'b1;      
+            end
+  
+            8'h1B: begin // S key
+                stand_pressed <= 1'b1;   
+                LEDR[1] <= 1'b1;       
+            end
+        
+           8'h23: begin // D key
+                stand_pressed <= 1'b1; 
+                LEDR[2] <= 1'b1;         
             end
                 
-            8'hF0: begin
-                if (received_data_en && received_data == 8'hF0) begin  // Break code prefix
-                    hit_pressed <= 1'b0;
-                end
+            8'hF0: begin // Break
+                stand_pressed <= 1'b0;
             end
                 
             default: hit_pressed <= 1'b0;
+                    stand_pressed <= 1'b0;
+                    deal_pressed <= 1'b0;
+                    LEDR[0] <= 1'b0;
+                    LEDR[1] <= 1'b0;
+                    LEDR[2] <= 1'b0;
         endcase
     end
 
