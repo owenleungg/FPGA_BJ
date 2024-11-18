@@ -22,29 +22,41 @@ module blackjack_fsm (
     reg [2:0] cards_dealt;
     reg [4:0] player_first_two;
     reg [4:0] dealer_first_two;
-	 reg [4:0] new_score;
     reg player_has_ace;
     reg dealer_has_ace;
+    reg player_ace_converted;  // New register
+    reg dealer_ace_converted;  // New register
     reg dealing_complete;
-    reg player_busted;  // Register to track player bust
+    reg player_busted;
     
-    function [4:0] adjust_for_ace;
-        input [4:0] current_score;
-        input [3:0] new_card;
-        input has_ace;
-        begin
-            if (new_card == 4'd1) begin  // New card is Ace
-                if (current_score <= 10)
-                    adjust_for_ace = current_score + 11;
-                else
-                    adjust_for_ace = current_score + 1;
-            end
-            else if (has_ace && (current_score + new_card > 21))
-                adjust_for_ace = current_score - 10 + new_card;  // Convert Ace from 11 to 1
-            else
-                adjust_for_ace = current_score + new_card;
-        end
-    endfunction
+    // Wires for ace adjuster outputs
+    wire [4:0] player_adjusted_score;
+    wire player_new_has_ace;
+    wire player_new_ace_converted;
+    wire [4:0] dealer_adjusted_score;
+    wire dealer_new_has_ace;
+    wire dealer_new_ace_converted;
+    
+    // Instantiate ace adjusters for player and dealer
+    ace_score_adjuster player_ace_adj (
+        .current_score(player_score),
+        .new_card(card_value),
+        .has_ace(player_has_ace),
+        .ace_converted(player_ace_converted),
+        .adjusted_score(player_adjusted_score),
+        .new_has_ace(player_new_has_ace),
+        .new_ace_converted(player_new_ace_converted)
+    );
+    
+    ace_score_adjuster dealer_ace_adj (
+        .current_score(dealer_score),
+        .new_card(card_value),
+        .has_ace(dealer_has_ace),
+        .ace_converted(dealer_ace_converted),
+        .adjusted_score(dealer_adjusted_score),
+        .new_has_ace(dealer_new_has_ace),
+        .new_ace_converted(dealer_new_ace_converted)
+    );
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -56,6 +68,8 @@ module blackjack_fsm (
             dealer_first_two <= 5'd0;
             player_has_ace <= 1'b0;
             dealer_has_ace <= 1'b0;
+            player_ace_converted <= 1'b0;
+            dealer_ace_converted <= 1'b0;
             show_dealer_first <= 1'b0;
             dealing_complete <= 1'b0;
             player_busted <= 1'b0;
@@ -72,6 +86,8 @@ module blackjack_fsm (
                         dealer_first_two <= 5'd0;
                         player_has_ace <= 1'b0;
                         dealer_has_ace <= 1'b0;
+                        player_ace_converted <= 1'b0;
+                        dealer_ace_converted <= 1'b0;
                         show_dealer_first <= 1'b0;
                         dealing_complete <= 1'b0;
                         player_busted <= 1'b0;
@@ -82,28 +98,32 @@ module blackjack_fsm (
                     if (!dealing_complete) begin
                         case (cards_dealt)
                             3'd0: begin  // First player card
-                                player_first_two <= adjust_for_ace(5'd0, card_value, 1'b0);
-                                player_score <= adjust_for_ace(5'd0, card_value, 1'b0);
-                                if (card_value == 4'd1) player_has_ace <= 1'b1;
+                                player_first_two <= player_adjusted_score;
+                                player_score <= player_adjusted_score;
+                                player_has_ace <= player_new_has_ace;
+                                player_ace_converted <= player_new_ace_converted;
                                 cards_dealt <= cards_dealt + 1'b1;
                             end
                             3'd1: begin  // First dealer card
-                                dealer_first_two <= adjust_for_ace(5'd0, card_value, 1'b0);
-                                dealer_score <= adjust_for_ace(5'd0, card_value, 1'b0);
-                                if (card_value == 4'd1) dealer_has_ace <= 1'b1;
+                                dealer_first_two <= dealer_adjusted_score;
+                                dealer_score <= dealer_adjusted_score;
+                                dealer_has_ace <= dealer_new_has_ace;
+                                dealer_ace_converted <= dealer_new_ace_converted;
                                 cards_dealt <= cards_dealt + 1'b1;
                                 show_dealer_first <= 1'b1;
                             end
                             3'd2: begin  // Second player card
-                                player_first_two <= adjust_for_ace(player_first_two, card_value, player_has_ace);
-                                player_score <= adjust_for_ace(player_score, card_value, player_has_ace);
-                                if (card_value == 4'd1) player_has_ace <= 1'b1;
+                                player_first_two <= player_adjusted_score;
+                                player_score <= player_adjusted_score;
+                                player_has_ace <= player_new_has_ace;
+                                player_ace_converted <= player_new_ace_converted;
                                 cards_dealt <= cards_dealt + 1'b1;
                             end
                             3'd3: begin  // Second dealer card
-                                dealer_first_two <= adjust_for_ace(dealer_first_two, card_value, dealer_has_ace);
-                                dealer_score <= adjust_for_ace(dealer_score, card_value, dealer_has_ace);
-                                if (card_value == 4'd1) dealer_has_ace <= 1'b1;
+                                dealer_first_two <= dealer_adjusted_score;
+                                dealer_score <= dealer_adjusted_score;
+                                dealer_has_ace <= dealer_new_has_ace;
+                                dealer_ace_converted <= dealer_new_ace_converted;
                                 dealing_complete <= 1'b1;
                             end
                         endcase
@@ -124,14 +144,13 @@ module blackjack_fsm (
                 end
 
                 PLAYER_TURN: begin
-                    if (hit_pressed) begin
-   
-                        new_score = adjust_for_ace(player_score, card_value, player_has_ace);
-                        if (card_value == 4'd1) player_has_ace <= 1'b1;
-                        player_score <= new_score;
+                    if (hit_pressed && player_score < 21) begin  // Added score check
+                        player_score <= player_adjusted_score;
+                        player_has_ace <= player_new_has_ace;
+                        player_ace_converted <= player_new_ace_converted;
                         
                         // Immediate bust check
-                        if (new_score > 21) begin
+                        if (player_adjusted_score > 21) begin
                             player_busted <= 1'b1;
                             game_state <= GAME_OVER;
                         end
@@ -145,8 +164,9 @@ module blackjack_fsm (
                     // Only continue dealer's turn if player hasn't busted
                     if (!player_busted) begin
                         if (dealer_score < 17) begin
-                            dealer_score <= adjust_for_ace(dealer_score, card_value, dealer_has_ace);
-                            if (card_value == 4'd1) dealer_has_ace <= 1'b1;
+                            dealer_score <= dealer_adjusted_score;
+                            dealer_has_ace <= dealer_new_has_ace;
+                            dealer_ace_converted <= dealer_new_ace_converted;
                         end
                         else
                             game_state <= GAME_OVER;
@@ -164,73 +184,42 @@ module blackjack_fsm (
     end
 endmodule
 
-// Score converter module
-module score_converter (
-    input wire [4:0] player_score,
-    input wire [4:0] dealer_score,
-    input wire show_dealer_first,
-    output wire [3:0] player_ones,
-    output wire [3:0] player_tens,
-    output wire [3:0] dealer_ones,
-    output wire [3:0] dealer_tens
+//Ace score module
+module ace_score_adjuster (
+    input wire [4:0] current_score,
+    input wire [3:0] new_card,
+    input wire has_ace,
+    input wire ace_converted,  // New input to track if ace was already converted
+    output reg [4:0] adjusted_score,
+    output reg new_has_ace,
+    output reg new_ace_converted  // New output to track ace conversion
 );
-    assign player_ones = player_score % 10;
-    assign player_tens = player_score / 10;
-    assign dealer_ones = show_dealer_first ? dealer_score % 10 : 4'h0;
-    assign dealer_tens = show_dealer_first ? dealer_score / 10 : 4'h0;
-endmodule
-
-// Display controller module
-module display_controller (
-    input wire [2:0] game_state,
-    input wire [4:0] player_score,
-    input wire [4:0] dealer_score,
-    input wire [3:0] player_ones,
-    input wire [3:0] player_tens,
-    input wire [3:0] dealer_ones,
-    input wire [3:0] dealer_tens,
-    output wire [6:0] HEX0,
-    output wire [6:0] HEX1,
-    output wire [6:0] HEX2,
-    output wire [6:0] HEX3,
-    output wire [6:0] HEX4,
-    output wire [6:0] HEX5
-);
-    // Seven segment display instances
-    char_7seg player_ones_display(player_ones, HEX0);
-    char_7seg player_tens_display(player_tens, HEX1);
-    char_7seg dealer_ones_display(dealer_ones, HEX2);
-    char_7seg dealer_tens_display(dealer_tens, HEX3);
-
-    // Status display logic
-    reg [6:0] status_display;
     always @(*) begin
-        case (game_state)
-            3'b000: status_display = 7'b1111111;      // Blank (IDLE)
-            3'b001: status_display = 7'b0100001;      // d (INITIAL_DEAL)
-            3'b010: status_display = 7'b0001100;      // P (PLAYER_TURN)
-            3'b011: status_display = 7'b0100001;      // d (DEALER_TURN)
-            3'b100: begin                             // GAME_OVER
-                if (player_score > 21)
-                    status_display = 7'b0000011;      // b (bust)
-                else if (dealer_score > 21)
-                    status_display = 7'b0001100;      // P (player wins)
-                else if (player_score == dealer_score)
-                    status_display = 7'b0001111;      // t (tie/push)
-                else if (player_score > dealer_score)
-                    status_display = 7'b0001100;      // P (player wins)
-                else
-                    status_display = 7'b0100001;      // d (dealer wins)
-            end
-            default: status_display = 7'b1111111;     // Blank
-        endcase
-    end
-    assign HEX4 = status_display;
+        // Default: maintain current status
+        new_has_ace = has_ace;
+        new_ace_converted = ace_converted;
+        adjusted_score = current_score;
 
-    // Game state indicator
-    assign HEX5 = (game_state == 3'b000) ? 7'b1111001 :     // 1 (IDLE)
-                  (game_state == 3'b001) ? 7'b0100100 :      // 2 (INITIAL_DEAL)
-                  (game_state == 3'b010) ? 7'b0110000 :      // 3 (PLAYER_TURN)
-                  (game_state == 3'b011) ? 7'b0011001 :      // 4 (DEALER_TURN)
-                  7'b0010010;                                 // 5 (GAME_OVER)
+        if (new_card == 4'd1) begin  // New card is Ace
+            new_has_ace = 1'b1;
+            // Only use 11 if it won't cause a bust
+            if (current_score <= 10) begin
+                adjusted_score = current_score + 11;
+                new_ace_converted = 1'b0;  // New ace starts as 11
+            end
+            else begin
+                adjusted_score = current_score + 1;
+                new_ace_converted = 1'b1;  // New ace starts as 1
+            end
+        end
+        else begin
+            // Regular card
+            adjusted_score = current_score + new_card;
+            // Convert ace from 11 to 1 if needed and not already converted
+            if (has_ace && !ace_converted && adjusted_score > 21) begin
+                adjusted_score = adjusted_score - 10;
+                new_ace_converted = 1'b1;
+            end
+        end
+    end
 endmodule

@@ -18,6 +18,7 @@ module blackjack_top (
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
+    // Replaced Debouncer
     always @ (*)
     begin
         hit_pressed <= KEY[0];
