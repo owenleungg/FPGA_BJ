@@ -1,0 +1,253 @@
+module vga_blackjack_display #(
+    parameter H_RES = 640,
+    parameter V_RES = 480,
+    parameter CARD_WIDTH = 30,    // Smaller card width
+    parameter CARD_HEIGHT = 40,   // Smaller card height
+    parameter MAX_CARDS = 7,      // Support up to 7 cards per hand
+    parameter CURRENCY_BITS = 16  // 16 bits for currency (0-65535)
+    parameter SUIT_WIDTH = 8,     // Width of suit symbol
+    parameter SUIT_HEIGHT = 8     // Height of suit symbol
+)(
+    input wire clk,
+    input wire rst,
+    // Game state inputs
+    input wire [CURRENCY_BITS-1:0] player_balance,
+    input wire [CURRENCY_BITS-1:0] current_bet,
+    input wire [3:0] player_card_count,
+    input wire [3:0] dealer_card_count,
+    input wire [3:0] player_cards [MAX_CARDS-1:0], // Card values (1-10)
+    input wire [3:0] dealer_cards [MAX_CARDS-1:0],
+    // VGA outputs
+    output reg [3:0] vga_red,
+    output reg [3:0] vga_green,
+    output reg [3:0] vga_blue,
+    output reg vga_hsync,
+    output reg vga_vsync
+);
+
+// VGA timing parameters for 640x480 @60Hz
+localparam H_FRONT_PORCH = 16;
+localparam H_SYNC = 96;
+localparam H_BACK_PORCH = 48;
+localparam H_TOTAL = H_RES + H_FRONT_PORCH + H_SYNC + H_BACK_PORCH;
+
+localparam V_FRONT_PORCH = 10;
+localparam V_SYNC = 2;
+localparam V_BACK_PORCH = 33;
+localparam V_TOTAL = V_RES + V_FRONT_PORCH + V_SYNC + V_BACK_PORCH;
+
+// Card display positions
+reg [9:0] player_positions_x [MAX_CARDS-1:0];
+reg [9:0] dealer_positions_x [MAX_CARDS-1:0];
+initial begin
+    // Initialize card positions with 35 pixel spacing
+    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
+        player_positions_x[i] = 100 + (i * 35); // Player cards at bottom
+        dealer_positions_x[i] = 100 + (i * 35); // Dealer cards at top
+    end
+end
+
+localparam PLAYER_Y = 350; // Player cards Y position
+localparam DEALER_Y = 100; // Dealer cards Y position
+
+// Number ROM for displaying card values (0-9)
+reg [24:0] number_rom [0:9]; // 5x5 number patterns
+initial begin
+    // Simple 5x5 number patterns
+    number_rom[0] = 25'b0111_01001_01001_01001_01110; // 0
+    number_rom[1] = 25'b0010_00110_00010_00010_00111; // 1
+    number_rom[2] = 25'b0110_01001_00010_00100_01111; // 2
+    number_rom[3] = 25'b0110_01001_00110_01001_00110; // 3
+    number_rom[4] = 25'b0101_01001_01111_00001_00001; // 4
+    number_rom[5] = 25'b01111_01000_01110_00001_01110; // 5
+    number_rom[6] = 25'b00110_01000_01110_01001_00110; // 6
+    number_rom[7] = 25'b01111_00001_00010_00100_00100; // 7
+    number_rom[8] = 25'b00110_01001_00110_01001_00110; // 8
+    number_rom[9] = 25'b00110_01001_00111_00001_00110; // 9
+end
+
+// VGA counters
+reg [9:0] h_count = 0;
+reg [9:0] v_count = 0;
+
+// Current pixel position
+wire [9:0] x_pos = (h_count < H_RES) ? h_count : 0;
+wire [9:0] y_pos = (v_count < V_RES) ? v_count : 0;
+
+// Active video area flag
+wire video_active = (h_count < H_RES && v_count < V_RES);
+
+// Card and number drawing logic
+reg in_card;
+reg [3:0] current_card_value;
+reg [2:0] number_x, number_y;
+wire [4:0] number_addr = number_y * 5 + number_x;
+reg drawing_number;
+
+always @(*) begin
+    in_card = 0;
+    current_card_value = 0;
+    drawing_number = 0;
+    
+    // Check player cards
+    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
+        if (i < player_card_count &&
+            x_pos >= player_positions_x[i] && 
+            x_pos < player_positions_x[i] + CARD_WIDTH &&
+            y_pos >= PLAYER_Y && 
+            y_pos < PLAYER_Y + CARD_HEIGHT) begin
+            
+            in_card = 1;
+            current_card_value = player_cards[i];
+            
+            // Calculate position within number
+            number_x = (x_pos - player_positions_x[i] - 5) % 5;
+            number_y = (y_pos - PLAYER_Y - 5) % 5;
+            drawing_number = (x_pos - player_positions_x[i] >= 5) && 
+                           (x_pos - player_positions_x[i] < 10) &&
+                           (y_pos - PLAYER_Y >= 5) &&
+                           (y_pos - PLAYER_Y < 10);
+        end
+    end
+    
+    // Check dealer cards
+    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
+        if (i < dealer_card_count &&
+            x_pos >= dealer_positions_x[i] && 
+            x_pos < dealer_positions_x[i] + CARD_WIDTH &&
+            y_pos >= DEALER_Y && 
+            y_pos < DEALER_Y + CARD_HEIGHT) begin
+            
+            in_card = 1;
+            current_card_value = dealer_cards[i];
+            
+            // Calculate position within number
+            number_x = (x_pos - dealer_positions_x[i] - 5) % 5;
+            number_y = (y_pos - DEALER_Y - 5) % 5;
+            drawing_number = (x_pos - dealer_positions_x[i] >= 5) &&
+                           (x_pos - dealer_positions_x[i] < 10) &&
+                           (y_pos - DEALER_Y >= 5) &&
+                           (y_pos - DEALER_Y < 10);
+        end
+    end
+end
+
+// Currency display parameters
+localparam CURRENCY_X = 10;
+localparam BALANCE_Y = 440;
+localparam BET_Y = 420;
+
+// VGA timing and pixel generation
+always @(posedge clk) begin
+    if (rst) begin
+        h_count <= 0;
+        v_count <= 0;
+        vga_hsync <= 1;
+        vga_vsync <= 1;
+    end else begin
+        // Horizontal counter
+        if (h_count == H_TOTAL - 1) begin
+            h_count <= 0;
+            if (v_count == V_TOTAL - 1)
+                v_count <= 0;
+            else
+                v_count <= v_count + 1;
+        end else
+            h_count <= h_count + 1;
+
+        // Generate sync signals
+        vga_hsync <= ~(h_count >= H_RES + H_FRONT_PORCH &&
+                      h_count < H_RES + H_FRONT_PORCH + H_SYNC);
+        vga_vsync <= ~(v_count >= V_RES + V_FRONT_PORCH &&
+                      v_count < V_RES + V_FRONT_PORCH + V_SYNC);
+
+        // Generate pixel color
+        if (video_active) begin
+            if (in_card) begin
+                if (drawing_number && number_rom[current_card_value][number_addr]) begin
+                    // Draw number in black
+                    vga_red <= 4'h0;
+                    vga_green <= 4'h0;
+                    vga_blue <= 4'h0;
+                end else begin
+                    // Draw card (white with black border)
+                    if (x_pos == player_positions_x[current_card_value] ||
+                        x_pos == player_positions_x[current_card_value] + CARD_WIDTH - 1 ||
+                        y_pos == PLAYER_Y ||
+                        y_pos == PLAYER_Y + CARD_HEIGHT - 1) begin
+                        // Black border
+                        vga_red <= 4'h0;
+                        vga_green <= 4'h0;
+                        vga_blue <= 4'h0;
+                    end else begin
+                        // White interior
+                        vga_red <= 4'hF;
+                        vga_green <= 4'hF;
+                        vga_blue <= 4'hF;
+                    end
+                end
+            end else begin
+                // Draw background (dark green)
+                vga_red <= 4'h0;
+                vga_green <= 4'h8;
+                vga_blue <= 4'h0;
+            end
+        end else begin
+            // Blanking period
+            vga_red <= 4'h0;
+            vga_green <= 4'h0;
+            vga_blue <= 4'h0;
+        end
+    end
+end
+
+endmodule
+
+// Game state RAM module
+module blackjack_game_ram #(
+    parameter CURRENCY_BITS = 16,
+    parameter MAX_CARDS = 7
+)(
+    input wire clk,
+    input wire rst,
+    input wire [3:0] addr,
+    input wire [CURRENCY_BITS-1:0] write_data,
+    input wire write_en,
+    output reg [CURRENCY_BITS-1:0] read_data
+);
+
+// Memory map
+localparam
+    ADDR_PLAYER_BALANCE = 4'h0,
+    ADDR_CURRENT_BET = 4'h1,
+    ADDR_PLAYER_CARD_COUNT = 4'h2,
+    ADDR_DEALER_CARD_COUNT = 4'h3,
+    ADDR_PLAYER_CARDS_START = 4'h4,
+    ADDR_DEALER_CARDS_START = 4'h4 + MAX_CARDS;
+
+// Memory array
+reg [CURRENCY_BITS-1:0] ram [0:15];
+
+// Write operation
+always @(posedge clk) begin
+    if (rst) begin
+        // Initialize memory
+        ram[ADDR_PLAYER_BALANCE] <= 1000;  // Starting balance
+        ram[ADDR_CURRENT_BET] <= 0;
+        ram[ADDR_PLAYER_CARD_COUNT] <= 0;
+        ram[ADDR_DEALER_CARD_COUNT] <= 0;
+        for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
+            ram[ADDR_PLAYER_CARDS_START + i] <= 0;
+            ram[ADDR_DEALER_CARDS_START + i] <= 0;
+        end
+    end else if (write_en) begin
+        ram[addr] <= write_data;
+    end
+end
+
+// Read operation
+always @(posedge clk) begin
+    read_data <= ram[addr];
+end
+
+endmodule
