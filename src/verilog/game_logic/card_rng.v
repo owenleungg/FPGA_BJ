@@ -8,7 +8,7 @@ module card_rng (
   reg [15:0] lfsr = 15'b00010;     // 5-bit LFSR with non-zero initial state
   wire feedback;    
 
-   // Taps at positions 5 and 3
+   // Taps positions 
   assign feedback = lfsr[15] ^ lfsr[14] ^ lfsr[12] ^ lfsr[3];
 
   // LFSR for new number generation
