@@ -22,7 +22,6 @@ module blackjack_top (
     wire [4:0] player_score, dealer_score;
     wire [2:0] game_state;
     wire hit_pressed, stand_pressed, deal_pressed;
-    wire hit_raw;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
 
@@ -32,7 +31,7 @@ module blackjack_top (
         .PS2_DAT(PS2_DAT),
         .CLOCK_50(CLOCK_50),
         .reset(~KEY[0]),           // Active-high reset to PS2 controller 
-        .hit_pressed(hit_raw),
+        .hit_pressed(hit_pressed),
         .stand_pressed(stand_pressed),
         .deal_pressed(deal_pressed),
         .LEDR(LEDR)
