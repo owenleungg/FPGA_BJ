@@ -1,59 +1,67 @@
-module blackjack_ps2(
+module blackjack_ps2 (
+    // Inputs
+    input wire CLOCK_50,
+    
+    // Bidirectionals
     inout PS2_CLK,
     inout PS2_DAT,
-    input CLOCK_50,
+    
+    // Outputs
     output reg hit_pressed,
     output reg stand_pressed,
     output reg deal_pressed,
-    output reg [9:0] LEDR,
+    output wire [9:0] LEDR    // For debugging - shows last key pressed
 );
 
-    wire received_data_en, received_data;
+    // Internal signals
+    wire [7:0] ps2_key_data;
+    wire ps2_key_pressed;
+    reg [7:0] last_data_received;
 
-    // Instantiate the PS/2 Controller
-    PS2_Controller ps2_controller_inst (
-        .CLOCK_50(CLOCK_50),
-        .reset(reset),
-        .PS2_CLK(PS2_CLK),
-        .PS2_DAT(PS2_DAT),
-        .received_data(received_data),
-        .received_data_en(received_data_en)
-    );
-    
-    always @(posedge CLOCK_50) 
-    begin
-        case (received_data)
-            8'h33: begin // H key
-                hit_pressed <= 1'b1;    
-                LEDR[0] <= 1'b1;      
-            end
-  
-            8'h1B: begin // S key
-                stand_pressed <= 1'b1;   
-                LEDR[1] <= 1'b1;       
-            end
-        
-           8'h23: begin // D key
-                stand_pressed <= 1'b1; 
-                LEDR[2] <= 1'b1;         
-            end
-                
-            8'hF0: begin // Break
-                stand_pressed <= 1'b0;
-            end
-                
-            default: hit_pressed <= 1'b0;
-                    stand_pressed <= 1'b0;
-                    deal_pressed <= 1'b0;
-                    LEDR[0] <= 1'b0;
-                    LEDR[1] <= 1'b0;
-                    LEDR[2] <= 1'b0;
-        endcase
+    // PS2 scan codes for H, S, and D keys
+    localparam H_KEY = 8'h33;  // PS2 scan code for H
+    localparam S_KEY = 8'h1B;  // PS2 scan code for S
+    localparam D_KEY = 8'h23;  // PS2 scan code for D
+
+    // Store last received data for debugging display
+    always @(posedge CLOCK_50) begin
+        if (ps2_key_pressed)
+            last_data_received <= ps2_key_data;
     end
 
-    always @ (posedge CLOCK_50)
-        begin
-            LEDR[0] <= hit_pressed;
+    // Process key presses
+    always @(posedge CLOCK_50) begin
+        // Default all signals to 0
+        hit_pressed <= 1'b0;
+        stand_pressed <= 1'b0;
+        deal_pressed <= 1'b0;
+
+        // Set appropriate signal based on key press
+        if (ps2_key_pressed) begin
+            case (ps2_key_data)
+                H_KEY: hit_pressed <= 1'b1;
+                S_KEY: stand_pressed <= 1'b1;
+                D_KEY: deal_pressed <= 1'b1;
+                default: begin
+                    hit_pressed <= 1'b0;
+                    stand_pressed <= 1'b0;
+                    deal_pressed <= 1'b0;
+                end
+            endcase
         end
+    end
+
+    // Debug display - show last key pressed on LEDs
+    assign LEDR = {2'b00, last_data_received};
+
+    // Instantiate the PS2 Controller
+    PS2_Controller PS2 (
+        .CLOCK_50(CLOCK_50),
+        .reset(1'b0),              // No reset needed for this implementation
+        .PS2_CLK(PS2_CLK),
+        .PS2_DAT(PS2_DAT),
+        .received_data(ps2_key_data),
+        .received_data_en(ps2_key_pressed)
+    );
 
 endmodule
