@@ -223,3 +223,74 @@ module ace_score_adjuster (
         end
     end
 endmodule
+
+// Score converter module
+module score_converter (
+    input wire [4:0] player_score,
+    input wire [4:0] dealer_score,
+    input wire show_dealer_first,
+    output wire [3:0] player_ones,
+    output wire [3:0] player_tens,
+    output wire [3:0] dealer_ones,
+    output wire [3:0] dealer_tens
+);
+    assign player_ones = player_score % 10;
+    assign player_tens = player_score / 10;
+    assign dealer_ones = show_dealer_first ? dealer_score % 10 : 4'h0;
+    assign dealer_tens = show_dealer_first ? dealer_score / 10 : 4'h0;
+endmodule
+
+// Display controller module
+module display_controller (
+    input wire [2:0] game_state,
+    input wire [4:0] player_score,
+    input wire [4:0] dealer_score,
+    input wire [3:0] player_ones,
+    input wire [3:0] player_tens,
+    input wire [3:0] dealer_ones,
+    input wire [3:0] dealer_tens,
+    output wire [6:0] HEX0,
+    output wire [6:0] HEX1,
+    output wire [6:0] HEX2,
+    output wire [6:0] HEX3,
+    output wire [6:0] HEX4,
+    output wire [6:0] HEX5
+);
+    // Seven segment display instances
+    char_7seg player_ones_display(player_ones, HEX0);
+    char_7seg player_tens_display(player_tens, HEX1);
+    char_7seg dealer_ones_display(dealer_ones, HEX2);
+    char_7seg dealer_tens_display(dealer_tens, HEX3);
+
+    // Status display logic
+    reg [6:0] status_display;
+    always @(*) begin
+        case (game_state)
+            3'b000: status_display = 7'b1111111;      // Blank (IDLE)
+            3'b001: status_display = 7'b0100001;      // d (INITIAL_DEAL)
+            3'b010: status_display = 7'b0001100;      // P (PLAYER_TURN)
+            3'b011: status_display = 7'b0100001;      // d (DEALER_TURN)
+            3'b100: begin                             // GAME_OVER
+                if (player_score > 21)
+                    status_display = 7'b0000011;      // b (bust)
+                else if (dealer_score > 21)
+                    status_display = 7'b0001100;      // P (player wins)
+                else if (player_score == dealer_score)
+                    status_display = 7'b0001111;      // t (tie/push)
+                else if (player_score > dealer_score)
+                    status_display = 7'b0001100;      // P (player wins)
+                else
+                    status_display = 7'b0100001;      // d (dealer wins)
+            end
+            default: status_display = 7'b1111111;     // Blank
+        endcase
+    end
+    assign HEX4 = status_display;
+
+    // Game state indicator
+    assign HEX5 = (game_state == 3'b000) ? 7'b1111001 :     // 1 (IDLE)
+                  (game_state == 3'b001) ? 7'b0100100 :      // 2 (INITIAL_DEAL)
+                  (game_state == 3'b010) ? 7'b0110000 :      // 3 (PLAYER_TURN)
+                  (game_state == 3'b011) ? 7'b0011001 :      // 4 (DEALER_TURN)
+                  7'b0010010;                                 // 5 (GAME_OVER)
+endmodule
