@@ -1,7 +1,7 @@
 module blackjack_ps2 (
     // Inputs
     input wire CLOCK_50,
-    input wire reset,
+    input wire reset,         // Active-high reset
     
     // Bidirectionals
     inout PS2_CLK,
@@ -11,40 +11,28 @@ module blackjack_ps2 (
     output reg hit_pressed,
     output reg stand_pressed,
     output reg deal_pressed,
-    output wire [7:0] received_data,  // Debug: raw PS2 data
-    output wire received_valid,       // Debug: data valid signal
-    output wire [9:0] LEDR           // Debug display
+    output wire [9:0] LEDR    // For debugging - shows last key pressed
 );
 
     // Internal signals
     wire [7:0] ps2_key_data;
     wire ps2_key_pressed;
     reg [7:0] last_data_received;
-    reg key_released;  // Track if key was released
 
-    // PS2 scan codes for make (press) and break (release) codes
-    localparam H_MAKE = 8'h33;    // H key make code
-    localparam S_MAKE = 8'h1B;    // S key make code
-    localparam D_MAKE = 8'h23;    // D key make code
-    localparam BREAK = 8'hF0;     // Break code prefix
+    // PS2 scan codes for H, S, and D keys
+    localparam H_KEY = 8'h33;  // PS2 scan code for H
+    localparam S_KEY = 8'h1B;  // PS2 scan code for S
+    localparam D_KEY = 8'h23;  // PS2 scan code for D
 
-    // Store last received data for debugging
+    // Store last received data for debugging display
     always @(posedge CLOCK_50) begin
-        if (reset) begin
+        if (reset)
             last_data_received <= 8'h00;
-            key_released <= 1'b0;
-        end
-        else if (ps2_key_pressed) begin
-            if (ps2_key_data == BREAK)
-                key_released <= 1'b1;
-            else begin
-                last_data_received <= ps2_key_data;
-                key_released <= 1'b0;
-            end
-        end
+        else if (ps2_key_pressed)
+            last_data_received <= ps2_key_data;
     end
 
-    // Process key presses with break code handling
+    // Process key presses
     always @(posedge CLOCK_50) begin
         if (reset) begin
             hit_pressed <= 1'b0;
@@ -57,26 +45,24 @@ module blackjack_ps2 (
             stand_pressed <= 1'b0;
             deal_pressed <= 1'b0;
 
-            // Only set signals on make codes (not on break codes)
-            if (ps2_key_pressed && !key_released) begin
+            // Set appropriate signal based on key press
+            if (ps2_key_pressed) begin
                 case (ps2_key_data)
-                    H_MAKE: hit_pressed <= 1'b1;
-                    S_MAKE: stand_pressed <= 1'b1;
-                    D_MAKE: deal_pressed <= 1'b1;
+                    H_KEY: hit_pressed <= 1'b1;
+                    S_KEY: stand_pressed <= 1'b1;
+                    D_KEY: deal_pressed <= 1'b1;
                 endcase
             end
         end
     end
 
-    // Debug outputs
-    assign received_data = ps2_key_data;
-    assign received_valid = ps2_key_pressed;
-    assign LEDR = {1'b0, key_released, last_data_received};
+    // Debug display - show last key pressed on LEDs
+    assign LEDR = {2'b00, last_data_received};
 
     // Instantiate the PS2 Controller
     PS2_Controller PS2 (
         .CLOCK_50(CLOCK_50),
-        .reset(reset),
+        .reset(reset),              // Connect reset
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .received_data(ps2_key_data),

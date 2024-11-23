@@ -2,11 +2,11 @@ module blackjack_top (
     // PS2 Interface
     inout PS2_CLK,
     inout PS2_DAT,
-    
+
     // Clock and Reset
     input wire CLOCK_50,
     input wire [0:0] KEY,         // KEY[0] is reset, active-low
-    
+
     // Display outputs
     output wire [6:0] HEX0,        // Player score ones digit
     output wire [6:0] HEX1,        // Player score tens digit
@@ -21,56 +21,45 @@ module blackjack_top (
     wire [3:0] card_value;
     wire [4:0] player_score, dealer_score;
     wire [2:0] game_state;
+    wire hit_pressed, stand_pressed, deal_pressed;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
-    
-    // Raw PS2 signals before debouncing
-    wire raw_hit, raw_stand, raw_deal;
-    
-    // Final debounced signals
-    wire hit_pressed, stand_pressed, deal_pressed;
-    
-    // Debug wires
-    wire [7:0] ps2_data;
-    wire ps2_valid;
-        
-    // Instantiate the PS/2 module with debug outputs
+
+    // Instantiate the PS/2 module 
     blackjack_ps2 ps2_inst (
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .CLOCK_50(CLOCK_50),
-        .reset(1'b0),              // Changed: Don't reset PS2 controller
-        .hit_pressed(raw_hit),
-        .stand_pressed(raw_stand),
-        .deal_pressed(raw_deal),
-        .received_data(ps2_data),  // Debug output
-        .received_valid(ps2_valid), // Debug output
-        .LEDR({ps2_valid, ps2_data}) // Show PS2 data on LEDs
-    );
-
-    // Button debouncer
-    button_debouncer debouncer_inst (
-        .clk(CLOCK_50),
-        .rst_n(KEY[0]),           // Active-low reset
-        .key_hit(raw_hit),
-        .key_stand(raw_stand),
-        .key_deal(raw_deal),
+        .reset(~KEY[0]),           // Active-high reset to PS2 controller 
         .hit_pressed(hit_pressed),
         .stand_pressed(stand_pressed),
-        .deal_pressed(deal_pressed)
+        .deal_pressed(deal_pressed),
+        .LEDR(LEDR)
     );
 
-    // RNG Module with explicit enable
+    // // Button debouncer
+    // button_debouncer debouncer_inst (
+    //     .clk(CLOCK_50),
+    //     .rst_n(KEY[2]), 
+    //     .key_hit(KEY[0]),
+    //     .key_stand(KEY[1]),
+    //     .key_deal(KEY[3]),
+    //     .hit_pressed(hit_pressed),
+    //     .stand_pressed(stand_pressed),
+    //     .deal_pressed(deal_pressed)
+    // );
+
+    // RNG Module
     card_rng rng_inst (
         .clk(CLOCK_50),
-        .reset(~KEY[0]),          // active low reset
+        .rst_n(KEY[0]), 
         .card_value(card_value)
     );
 
     // Main game FSM
     blackjack_fsm fsm_inst (
         .clk(CLOCK_50),
-        .rst_n(KEY[0]),           // Active low reset
+        .rst_n(KEY[0]),   
         .hit_pressed(hit_pressed),
         .stand_pressed(stand_pressed),
         .deal_pressed(deal_pressed),

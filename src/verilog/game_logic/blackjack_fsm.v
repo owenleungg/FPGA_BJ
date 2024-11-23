@@ -59,7 +59,7 @@ module blackjack_fsm (
     );
 
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+        if (!rst_n) begin // active low reset 
             game_state <= IDLE;
             player_score <= 5'd0;
             dealer_score <= 5'd0;
