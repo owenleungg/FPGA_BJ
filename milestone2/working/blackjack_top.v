@@ -25,6 +25,18 @@ module blackjack_top (
         stand_pressed <= KEY[1];
         deal_pressed <= KEY [2];
     end
+
+    // // Button debouncer
+    // button_debouncer debouncer_inst (
+    //     .clk(CLOCK_50),
+    //     .rst_n(KEY[2]),
+    //     .key_hit(KEY[0]),
+    //     .key_stand(KEY[1]),
+    //     .key_deal(KEY[3]),
+    //     .hit_pressed(hit_pressed),
+    //     .stand_pressed(stand_pressed),
+    //     .deal_pressed(deal_pressed)
+    // );
         
     
     // RNG Module
