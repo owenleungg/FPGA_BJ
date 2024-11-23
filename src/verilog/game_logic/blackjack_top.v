@@ -63,7 +63,7 @@ module blackjack_top (
     // RNG Module with explicit enable
     card_rng rng_inst (
         .clk(CLOCK_50),
-        .reset(~KEY[0]),          // Added reset to RNG
+        .reset(~KEY[0]),          // active low reset
         .card_value(card_value)
     );
 
