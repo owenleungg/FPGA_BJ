@@ -1,74 +1,170 @@
-module currency_updaters (current_currency, currency_change);
-    input [7:0] SW;
-    input [1:0] KEY;
-    output [6:0] HEX5, HEX4, HEX3, HEX2, HEX1, HEX0;
-    output [9:0] LEDR;
-  
-    reg [7:0] A, B;
-    wire [7:0] S;
-    wire cout;
+module currency_system (
+    input wire CLOCK_50,
+    input wire [3:0] KEY,          // KEY[0]=reset, KEY[1]=bet up, KEY[2]=bet down, KEY[3]=confirm bet
+    input wire [7:0] SW,           // Optional: Use switches to set initial bankroll
+    output wire [6:0] HEX4,        // Current bet amount
+    output wire [6:0] HEX5,        
+    input wire game_won,           // Input from FSM indicating win
+    input wire game_push,          // Input from FSM indicating push (tie)
+    input wire game_state_idle,    // Input from FSM indicating game is in IDLE state
+    output wire [7:0] current_bet, // Output to FSM
+    output wire bet_confirmed      // Output to FSM
+);
 
+    // Constants for bet amounts
+    localparam INIT_BANKROLL = 8'd100;  // Start with $100
+    localparam MIN_BET = 8'd5;          // Minimum bet $5
+    localparam MAX_BET = 8'd50;         // Maximum bet $50
+    localparam BET_INCREMENT = 8'd5;    // Increment bet by $5
 
-    // Store SW value into A or B based on KEY
-    always @(posedge KEY[0]) 
-    begin
-        if (KEY[1] == 1'b0)
-            A <= SW;
-        else
-            B <= SW;
+    // Internal registers
+    reg [7:0] bankroll;
+    reg [7:0] bet_amount;
+    reg bet_is_confirmed;
+    reg [23:0] button_timer;       // For button debouncing
+
+    // Addition/Subtraction module instance
+    wire [7:0] add_result, sub_result;
+    wire add_cout, sub_cout;
+
+    adder_subtractor money_math (
+        .A(bankroll),
+        .B(bet_amount),
+        .add_sub(1'b1),           // 1 for add, 0 for subtract
+        .S_add(add_result),
+        .S_sub(sub_result),
+        .cout_add(add_cout),
+        .cout_sub(sub_cout)
+    );
+
+    // Button debouncing and bet adjustment
+    always @(posedge CLOCK_50) begin
+        if (!KEY[0]) begin  // Reset
+            bankroll <= INIT_BANKROLL;
+            bet_amount <= MIN_BET;
+            bet_is_confirmed <= 1'b0;
+            button_timer <= 0;
+        end
+        else begin
+            // Button timer
+            if (button_timer > 0)
+                button_timer <= button_timer - 1;
+
+            // Only process bet changes when in IDLE state
+            if (game_state_idle && button_timer == 0) begin
+                if (!KEY[1] && bet_amount < MAX_BET && bet_amount < bankroll) begin  // Bet up
+                    bet_amount <= bet_amount + BET_INCREMENT;
+                    button_timer <= 24'd5000000;  // Debounce delay
+                end
+                else if (!KEY[2] && bet_amount > MIN_BET) begin  // Bet down
+                    bet_amount <= bet_amount - BET_INCREMENT;
+                    button_timer <= 24'd5000000;  // Debounce delay
+                end
+                else if (!KEY[3] && !bet_is_confirmed) begin  // Confirm bet
+                    bet_is_confirmed <= 1'b1;
+                    bankroll <= sub_result;  // Subtract bet from bankroll
+                    button_timer <= 24'd5000000;  // Debounce delay
+                end
+            end
+
+            // Handle game results
+            if (!game_state_idle) begin
+                bet_is_confirmed <= 1'b0;
+                if (game_won)
+                    bankroll <= add_result;  // Add winnings (2x bet)
+                else if (game_push)
+                    bankroll <= bankroll + bet_amount;  // Return bet amount
+            end
+        end
     end
 
-    // Connect the result to LEDR
-    assign LEDR[7:0] = S;
-    assign LEDR[8] = cout;
+    // Outputs
+    assign current_bet = bet_amount;
+    assign bet_confirmed = bet_is_confirmed;
 
-    full_adder16 U1 (A, B, 1'b0, S, cout);
+    // Convert numbers to 7-segment display
+    hex_display bet_display (
+        .value(bet_amount),
+        .hex5(HEX5),
+        .hex4(hex4)
+    );
 
 endmodule
 
-module full_adder (A, B, cin, S, cout);
-    input A, B, cin;
-    output S, cout;
+// Modified adder/subtractor module
+module adder_subtractor (
+    input [7:0] A,
+    input [7:0] B,
+    input add_sub,          // 1 for add, 0 for subtract
+    output [7:0] S_add,     // Addition result
+    output [7:0] S_sub,     // Subtraction result
+    output cout_add,        // Addition carry
+    output cout_sub         // Subtraction borrow
+);
 
-    assign S = A ^ B ^ cin;
-    assign cout = (B & A) | (A & cin) | (B & cin);
+    wire [7:0] B_comp;      // B's complement for subtraction
+    assign B_comp = ~B + 1; // Two's complement
+
+    // Addition path
+    full_adder8 adder (
+        .A(A),
+        .B(B),
+        .cin(1'b0),
+        .S(S_add),
+        .cout(cout_add)
+    );
+
+    // Subtraction path
+    full_adder8 subtractor (
+        .A(A),
+        .B(B_comp),
+        .cin(1'b0),
+        .S(S_sub),
+        .cout(cout_sub)
+    );
+
 endmodule
 
-module full_adder8 (A,B,cin,S,cout);
+// Seven-segment display decoder
+module hex_display (
+    input [7:0] value,
+    output reg [6:0] hex5,  // Most significant digit
+    output reg [6:0] hex4   // Least significant digit
+);
+    reg [3:0] digit1, digit0;
 
-   input[7:0] A,B;
-   input cin;
-   output [7:0] S;
-   output cout;
+    always @(*) begin
+        // Break value into decimal digits
+        digit1 = value / 10;
+        digit0 = value % 10;
+        
+        // Convert to 7-segment (active low)
+        case(digit1)
+            4'h0: hex5 = 7'b1000000;
+            4'h1: hex5 = 7'b1111001;
+            4'h2: hex5 = 7'b0100100;
+            4'h3: hex5 = 7'b0110000;
+            4'h4: hex5 = 7'b0011001;
+            4'h5: hex5 = 7'b0010010;
+            4'h6: hex5 = 7'b0000010;
+            4'h7: hex5 = 7'b1111000;
+            4'h8: hex5 = 7'b0000000;
+            4'h9: hex5 = 7'b0010000;
+            default: hex5 = 7'b1111111;
+        endcase
 
-   wire c[7:0];
-   assign c[0] = cin;
-
-   full_adder U1 (A[0], B[0], c[0], S[0], c[1]);
-   full_adder U2 (A[1], B[1], c[1], S[1], c[2]);
-   full_adder U3 (A[2], B[2], c[2], S[2], c[3]);
-   full_adder U4 (A[3], B[3], c[3], S[3], c[4]);
-   full_adder U5 (A[4], B[4], c[4], S[4], c[5]);
-   full_adder U6 (A[5], B[5], c[5], S[5], c[6]);
-   full_adder U7 (A[6], B[6], c[6], S[6], c[7]);
-   full_adder U8 (A[7], B[7], c[7], S[7], cout);
+        case(digit0)
+            4'h0: hex4 = 7'b1000000;
+            4'h1: hex4 = 7'b1111001;
+            4'h2: hex4 = 7'b0100100;
+            4'h3: hex4 = 7'b0110000;
+            4'h4: hex4 = 7'b0011001;
+            4'h5: hex4 = 7'b0010010;
+            4'h6: hex4 = 7'b0000010;
+            4'h7: hex4 = 7'b1111000;
+            4'h8: hex4 = 7'b0000000;
+            4'h9: hex4 = 7'b0010000;
+            default: hex4 = 7'b1111111;
+        endcase
+    end
 endmodule
-
-module comparator (V, c, z);
-    input [3:0] V; 
-    input c;
-    output z;
-
-    assign z = (V[3] & V[2]) | (V[3] & V[1]) | c;
-endmodule
-
-module mux_4bit (cout, M);
-    input cout;
-    output [3:0] M; 
-
-    assign M[0] = 0;
-    assign M[1] = cout;
-    assign M[2] = cout;
-    assign M[3] = 0;
-endmodule
-
