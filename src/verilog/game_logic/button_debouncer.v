@@ -17,7 +17,7 @@ module button_debouncer (
     assign deal_pressed = (deal_counter == 20'hFFFFF) && !deal_was_pressed;
 
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+        if (!rst_n) begin // active high reset 
             hit_counter <= 20'd0;
             stand_counter <= 20'd0;
             deal_counter <= 20'd0;

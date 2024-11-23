@@ -34,12 +34,14 @@ module blackjack_ps2 (
 
     // Process key presses
     always @(posedge CLOCK_50) begin
+		// Spams 0 on each key press on every clock edge
         if (reset) begin
             hit_pressed <= 1'b0;
             stand_pressed <= 1'b0;
             deal_pressed <= 1'b0;
         end
         else begin
+			// If any other key was pressed
             // Default all signals to 0
             hit_pressed <= 1'b0;
             stand_pressed <= 1'b0;
@@ -57,12 +59,12 @@ module blackjack_ps2 (
     end
 
     // Debug display - show last key pressed on LEDs
-    assign LEDR = {2'b00, last_data_received};
+    assign LEDR[7:0] = last_data_received;
 
     // Instantiate the PS2 Controller
     PS2_Controller PS2 (
         .CLOCK_50(CLOCK_50),
-        .reset(reset),              // Connect reset
+        .reset(reset),           
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .received_data(ps2_key_data),

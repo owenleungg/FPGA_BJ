@@ -5,7 +5,7 @@ module card_rng (
 );
 
   // Internal signals
-  reg [15:0] lfsr = 15'b00010;     // 5-bit LFSR with non-zero initial state
+  reg [15:0] lfsr = 15'b00010;     // 15-bit LFSR 
   wire feedback;    
 
    // Taps positions 
