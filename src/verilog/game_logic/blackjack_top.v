@@ -38,11 +38,6 @@ module blackjack_top (
         .LEDR(LEDR)
     );
 
-    button_debouncer hit_key (
-        .button(hit_raw),
-        .CLOCK_50(CLOCK_50),
-        .button_pressed(hit_pressed)
-    );
 
     // // Button debouncer
     // button_debouncer debouncer_inst (

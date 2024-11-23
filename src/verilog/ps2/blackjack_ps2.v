@@ -24,6 +24,11 @@ module blackjack_ps2 (
     localparam S_KEY = 8'h1B;  // PS2 scan code for S
     localparam D_KEY = 8'h23;  // PS2 scan code for D
 
+	// raw signals
+	reg hit_raw;
+	reg stand_raw;
+	reg deal_raw;
+
     // Store last received data for debugging display
     always @(posedge CLOCK_50) begin
         if (reset)
@@ -35,29 +40,47 @@ module blackjack_ps2 (
     // Process key presses
     always @(posedge CLOCK_50) begin
         if (reset) begin
-            hit_pressed <= 1'b0;
-            stand_pressed <= 1'b0;
-            deal_pressed <= 1'b0;
+            hit_raw <= 1'b0;
+            stand_raw <= 1'b0;
+            deal_raw <= 1'b0;
         end
         else begin
             // Default all signals to 0
-            hit_pressed <= 1'b0;
-            stand_pressed <= 1'b0;
-            deal_pressed <= 1'b0;
+            hit_raw <= 1'b0;
+            stand_raw <= 1'b0;
+            deal_raw <= 1'b0;
 
             // Set appropriate signal based on key press
             if (ps2_key_pressed) begin
                 case (ps2_key_data)
-                    H_KEY: hit_pressed <= 1'b1;
-                    S_KEY: stand_pressed <= 1'b1;
-                    D_KEY: deal_pressed <= 1'b1;
+                    H_KEY: hit_raw <= 1'b1;
+                    S_KEY: stand_raw <= 1'b1;
+                    D_KEY: deal_raw <= 1'b1;
                 endcase
             end
         end
     end
 
     // Debug display - show last key pressed on LEDs
-    assign LEDR = {2'b00, last_data_received};
+    assign LEDR[7:0] = last_data_received;
+
+	button_debouncer hit_key (
+        .button(hit_raw),
+        .CLOCK_50(CLOCK_50),
+        .button_pressed(hit_pressed)
+    );
+
+		button_debouncer stand_key (
+        .button(stand_raw),
+        .CLOCK_50(CLOCK_50),
+        .button_pressed(stand_pressed)
+    );
+
+		button_debouncer deal_key (
+        .button(deal_raw),
+        .CLOCK_50(CLOCK_50),
+        .button_pressed(deal_pressed)
+    );
 
     // Instantiate the PS2 Controller
     PS2_Controller PS2 (

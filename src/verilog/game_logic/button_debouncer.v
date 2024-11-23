@@ -18,7 +18,7 @@ endmodule
 
 module slow_clock(
     input CLOCK_50,
-    output reg clk_out,
+    output reg clk_out
 );
     reg[16:0] count = 0;
 
