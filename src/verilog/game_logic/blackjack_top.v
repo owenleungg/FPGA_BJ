@@ -5,7 +5,7 @@ module blackjack_top (
     
     // Clock and Reset
     input wire CLOCK_50,
-    input wire reset,              // Single reset button - was KEY[2]
+    input wire [0:0] KEY,         // KEY[0] is reset, active-low
     
     // Display outputs
     output wire [6:0] HEX0,        // Player score ones digit
@@ -21,19 +21,20 @@ module blackjack_top (
     wire [3:0] card_value;
     wire [4:0] player_score, dealer_score;
     wire [2:0] game_state;
-    wire hit_pressed, stand_pressed, deal_pressed;  // Now from PS2 instead of buttons
+    wire hit_pressed, stand_pressed, deal_pressed;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
         
-    // Instantiate the PS/2 module
+    // Instantiate the PS/2 module - note reset is connected
     blackjack_ps2 ps2_inst (
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .CLOCK_50(CLOCK_50),
-        .hit_pressed(hit_pressed),     // H key
-        .stand_pressed(stand_pressed), // S key
-        .deal_pressed(deal_pressed),   // D key
-        .LEDR(LEDR)                   // Debug display
+        .reset(~KEY[0]),           // Active-high reset to PS2 controller
+        .hit_pressed(hit_pressed),
+        .stand_pressed(stand_pressed),
+        .deal_pressed(deal_pressed),
+        .LEDR(LEDR)
     );
 
     // RNG Module
@@ -45,10 +46,10 @@ module blackjack_top (
     // Main game FSM
     blackjack_fsm fsm_inst (
         .clk(CLOCK_50),
-        .rst_n(~reset),              // Active-low reset from button
-        .hit_pressed(hit_pressed),    // Now from PS2
-        .stand_pressed(stand_pressed), // Now from PS2
-        .deal_pressed(deal_pressed),   // Now from PS2
+        .rst_n(KEY[0]),           // Connect directly to KEY[0] as it's already active-low
+        .hit_pressed(hit_pressed),
+        .stand_pressed(stand_pressed),
+        .deal_pressed(deal_pressed),
         .card_value(card_value),
         .player_score(player_score),
         .dealer_score(dealer_score),

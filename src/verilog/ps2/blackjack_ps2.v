@@ -1,6 +1,7 @@
 module blackjack_ps2 (
     // Inputs
     input wire CLOCK_50,
+    input wire reset,         // Active-high reset
     
     // Bidirectionals
     inout PS2_CLK,
@@ -25,29 +26,33 @@ module blackjack_ps2 (
 
     // Store last received data for debugging display
     always @(posedge CLOCK_50) begin
-        if (ps2_key_pressed)
+        if (reset)
+            last_data_received <= 8'h00;
+        else if (ps2_key_pressed)
             last_data_received <= ps2_key_data;
     end
 
     // Process key presses
     always @(posedge CLOCK_50) begin
-        // Default all signals to 0
-        hit_pressed <= 1'b0;
-        stand_pressed <= 1'b0;
-        deal_pressed <= 1'b0;
+        if (reset) begin
+            hit_pressed <= 1'b0;
+            stand_pressed <= 1'b0;
+            deal_pressed <= 1'b0;
+        end
+        else begin
+            // Default all signals to 0
+            hit_pressed <= 1'b0;
+            stand_pressed <= 1'b0;
+            deal_pressed <= 1'b0;
 
-        // Set appropriate signal based on key press
-        if (ps2_key_pressed) begin
-            case (ps2_key_data)
-                H_KEY: hit_pressed <= 1'b1;
-                S_KEY: stand_pressed <= 1'b1;
-                D_KEY: deal_pressed <= 1'b1;
-                default: begin
-                    hit_pressed <= 1'b0;
-                    stand_pressed <= 1'b0;
-                    deal_pressed <= 1'b0;
-                end
-            endcase
+            // Set appropriate signal based on key press
+            if (ps2_key_pressed) begin
+                case (ps2_key_data)
+                    H_KEY: hit_pressed <= 1'b1;
+                    S_KEY: stand_pressed <= 1'b1;
+                    D_KEY: deal_pressed <= 1'b1;
+                endcase
+            end
         end
     end
 
@@ -57,7 +62,7 @@ module blackjack_ps2 (
     // Instantiate the PS2 Controller
     PS2_Controller PS2 (
         .CLOCK_50(CLOCK_50),
-        .reset(1'b0),              // No reset needed for this implementation
+        .reset(reset),              // Connect reset
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .received_data(ps2_key_data),
