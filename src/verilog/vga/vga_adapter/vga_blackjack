@@ -1,255 +1,212 @@
-//Dont really know if this works and how to really test it but
+/*
+*   Displays a pattern, which is read from a small memory, at (x,y) on the VGA output.
+*   To set coordinates, first place the desired value of y onto SW[6:0] and press KEY[1].
+*   Next, place the desired value of x onto SW[7:0] and then press KEY[2]. The (x,y)
+*   coordinates are displayed (in hexadecimal) on (HEX3-2,HEX1-0). Finally, press KEY[3]
+*   to draw the pattern at location (x,y).
+*/
+module vga_demo(CLOCK_50, SW, KEY, HEX3, HEX2, HEX1, HEX0,
+				VGA_R, VGA_G, VGA_B,
+				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK);
+	
+	input CLOCK_50;	
+	input [7:0] SW;
+	input [3:0] KEY;
+    output [6:0] HEX3, HEX2, HEX1, HEX0;
+	output [7:0] VGA_R;
+	output [7:0] VGA_G;
+	output [7:0] VGA_B;
+	output VGA_HS;
+	output VGA_VS;
+	output VGA_BLANK_N;
+	output VGA_SYNC_N;
+	output VGA_CLK;	
+	
+	wire [7:0] X;           // starting x location of object
+	wire [6:0] Y;           // starting y location of object
+   wire [3:0] XC;     // used to access object memory
+	wire [4:0] YC;
+   wire Ex, Ey;
+	wire [7:0] VGA_X;       // x location of each object pixel
+	wire [6:0] VGA_Y;       // y location of each object pixel
+	wire [2:0] VGA_COLOR;
+	
+	reg [2:0] selected_color;
+	wire [2:0] ace_color, ten_of_hearts_color, ten_of_diamonds_color;
+	
+    // store (x,y) starting location
+//    regn U1 (SW[6:0], KEY[0], ~KEY[1], CLOCK_50, Y);
+//        defparam U1.n = 7;
+//    regn U2 (SW[7:0], KEY[0], ~KEY[2], CLOCK_50, X);
+//        defparam U2.n = 8;
 
-module vga_blackjack_display #(
-    parameter H_RES = 640,
-    parameter V_RES = 480,
-    parameter CARD_WIDTH = 30,    // Smaller card width
-    parameter CARD_HEIGHT = 40,   // Smaller card height
-    parameter MAX_CARDS = 7,      // Support up to 7 cards per hand
-    parameter CURRENCY_BITS = 16  // 16 bits for currency (0-65535)
-    parameter SUIT_WIDTH = 8,     // Width of suit symbol
-    parameter SUIT_HEIGHT = 8     // Height of suit symbol
-)(
-    input wire clk,
-    input wire rst,
-    // Game state inputs
-    input wire [CURRENCY_BITS-1:0] player_balance,
-    input wire [CURRENCY_BITS-1:0] current_bet,
-    input wire [3:0] player_card_count,
-    input wire [3:0] dealer_card_count,
-    input wire [3:0] player_cards [MAX_CARDS-1:0], // Card values (1-10)
-    input wire [3:0] dealer_cards [MAX_CARDS-1:0],
-    // VGA outputs
-    output reg [3:0] vga_red,
-    output reg [3:0] vga_green,
-    output reg [3:0] vga_blue,
-    output reg vga_hsync,
-    output reg vga_vsync
-);
+	 assign X = 8'd24;
+	 assign Y = 8'd24;
+		  
+		  
+    count U3 (CLOCK_50, KEY[0], Ex, XC);    // column counter
+        defparam U3.n = 4;
+		  
+    // enable XC when VGA plotting starts
+    regn U5 (1'b1, KEY[0], ~KEY[3], CLOCK_50, Ex);
+        defparam U5.n = 1;
+		  
+    count U4 (CLOCK_50, KEY[0], Ey, YC);    // row counter
+        defparam U4.n = 5;
+		  
+    // enable YC at the end of each object row
+    assign Ey = (XC == 4'b1111);
 
-// VGA timing parameters for 640x480 @60Hz
-localparam H_FRONT_PORCH = 16;
-localparam H_SYNC = 96;
-localparam H_BACK_PORCH = 48;
-localparam H_TOTAL = H_RES + H_FRONT_PORCH + H_SYNC + H_BACK_PORCH;
+	 
+	 wire [3:0] card_value;
+	 wire [1:0] suit;
+	 
+	 card_rng card_rng_inst (
+        .clk(CLOCK_50),
+        .rst_n(KEY[0]), 
+        .card_value(card_value)
+    );
+	 
+	suit_rng suit_rng_inst (
+        .clk(CLOCK_50),
+        .rst_n(KEY[0]), 
+        .suit(suit)
+    );
+	  
+	wire [3:0] latched_card_value;
+	wire [1:0] latched_suit;
 
-localparam V_FRONT_PORCH = 10;
-localparam V_SYNC = 2;
-localparam V_BACK_PORCH = 33;
-localparam V_TOTAL = V_RES + V_FRONT_PORCH + V_SYNC + V_BACK_PORCH;
+	d_latch card_latch(card_value, KEY[3], KEY[0], latched_card_value);
+	d_latch suit_latch(suit, KEY[3], KEY[0], latched_suit);
+	 
+	 always @ (*) begin
+		case (latched_card_value)
+			4'd10: case (latched_suit)
+					2'd1: selected_color = ten_of_hearts_color;
+					2'd2:	selected_color	= ten_of_diamonds_color;
+					endcase
+			4'd1: selected_color = ace_color;
+			default: selected_color = 3'b000;
+		endcase
+	end
+	
+	assign VGA_COLOR = selected_color;
 
-// Card display positions
-reg [9:0] player_positions_x [MAX_CARDS-1:0];
-reg [9:0] dealer_positions_x [MAX_CARDS-1:0];
-initial begin
-    // Initialize card positions with 35 pixel spacing
-    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
-        player_positions_x[i] = 100 + (i * 35); // Player cards at bottom
-        dealer_positions_x[i] = 100 + (i * 35); // Dealer cards at top
-    end
-end
+    hex7seg H0 (SW[3:0], HEX0);
 
-localparam PLAYER_Y = 350; // Player cards Y position
-localparam DEALER_Y = 100; // Dealer cards Y position
+    // read a pixel color from object memory
+    ten_of_hearts t1 ({YC,XC}, CLOCK_50, ten_of_hearts_color);
+	 ten_of_diamonds_mem t2 ({YC,XC}, CLOCK_50, ten_of_diamonds_color);
+	
+	 ace_mem c2 ({YC,XC}, CLOCK_50, ace_color);
+	 
 
-// Number ROM for displaying card values (0-9)
-reg [24:0] number_rom [0:9]; // 5x5 number patterns
-initial begin
-    // Simple 5x5 number patterns
-    number_rom[0] = 25'b0111_01001_01001_01001_01110; // 0
-    number_rom[1] = 25'b0010_00110_00010_00010_00111; // 1
-    number_rom[2] = 25'b0110_01001_00010_00100_01111; // 2
-    number_rom[3] = 25'b0110_01001_00110_01001_00110; // 3
-    number_rom[4] = 25'b0101_01001_01111_00001_00001; // 4
-    number_rom[5] = 25'b01111_01000_01110_00001_01110; // 5
-    number_rom[6] = 25'b00110_01000_01110_01001_00110; // 6
-    number_rom[7] = 25'b01111_00001_00010_00100_00100; // 7
-    number_rom[8] = 25'b00110_01001_00110_01001_00110; // 8
-    number_rom[9] = 25'b00110_01001_00111_00001_00110; // 9
-end
+    // the object memory takes one clock cycle to provide data, so store
+    // the current values of (x,y) addresses to remain synchronized
+    regn U7 (X + XC, KEY[0], 1'b1, CLOCK_50, VGA_X);
+        defparam U7.n = 8;
+    regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, VGA_Y);
+        defparam U8.n = 7;
 
-// VGA counters
-reg [9:0] h_count = 0;
-reg [9:0] v_count = 0;
+    assign plot = ~KEY[3];
 
-// Current pixel position
-wire [9:0] x_pos = (h_count < H_RES) ? h_count : 0;
-wire [9:0] y_pos = (v_count < V_RES) ? v_count : 0;
-
-// Active video area flag
-wire video_active = (h_count < H_RES && v_count < V_RES);
-
-// Card and number drawing logic
-reg in_card;
-reg [3:0] current_card_value;
-reg [2:0] number_x, number_y;
-wire [4:0] number_addr = number_y * 5 + number_x;
-reg drawing_number;
-
-always @(*) begin
-    in_card = 0;
-    current_card_value = 0;
-    drawing_number = 0;
-    
-    // Check player cards
-    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
-        if (i < player_card_count &&
-            x_pos >= player_positions_x[i] && 
-            x_pos < player_positions_x[i] + CARD_WIDTH &&
-            y_pos >= PLAYER_Y && 
-            y_pos < PLAYER_Y + CARD_HEIGHT) begin
-            
-            in_card = 1;
-            current_card_value = player_cards[i];
-            
-            // Calculate position within number
-            number_x = (x_pos - player_positions_x[i] - 5) % 5;
-            number_y = (y_pos - PLAYER_Y - 5) % 5;
-            drawing_number = (x_pos - player_positions_x[i] >= 5) && 
-                           (x_pos - player_positions_x[i] < 10) &&
-                           (y_pos - PLAYER_Y >= 5) &&
-                           (y_pos - PLAYER_Y < 10);
-        end
-    end
-    
-    // Check dealer cards
-    for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
-        if (i < dealer_card_count &&
-            x_pos >= dealer_positions_x[i] && 
-            x_pos < dealer_positions_x[i] + CARD_WIDTH &&
-            y_pos >= DEALER_Y && 
-            y_pos < DEALER_Y + CARD_HEIGHT) begin
-            
-            in_card = 1;
-            current_card_value = dealer_cards[i];
-            
-            // Calculate position within number
-            number_x = (x_pos - dealer_positions_x[i] - 5) % 5;
-            number_y = (y_pos - DEALER_Y - 5) % 5;
-            drawing_number = (x_pos - dealer_positions_x[i] >= 5) &&
-                           (x_pos - dealer_positions_x[i] < 10) &&
-                           (y_pos - DEALER_Y >= 5) &&
-                           (y_pos - DEALER_Y < 10);
-        end
-    end
-end
-
-// Currency display parameters
-localparam CURRENCY_X = 10;
-localparam BALANCE_Y = 440;
-localparam BET_Y = 420;
-
-// VGA timing and pixel generation
-always @(posedge clk) begin
-    if (rst) begin
-        h_count <= 0;
-        v_count <= 0;
-        vga_hsync <= 1;
-        vga_vsync <= 1;
-    end else begin
-        // Horizontal counter
-        if (h_count == H_TOTAL - 1) begin
-            h_count <= 0;
-            if (v_count == V_TOTAL - 1)
-                v_count <= 0;
-            else
-                v_count <= v_count + 1;
-        end else
-            h_count <= h_count + 1;
-
-        // Generate sync signals
-        vga_hsync <= ~(h_count >= H_RES + H_FRONT_PORCH &&
-                      h_count < H_RES + H_FRONT_PORCH + H_SYNC);
-        vga_vsync <= ~(v_count >= V_RES + V_FRONT_PORCH &&
-                      v_count < V_RES + V_FRONT_PORCH + V_SYNC);
-
-        // Generate pixel color
-        if (video_active) begin
-            if (in_card) begin
-                if (drawing_number && number_rom[current_card_value][number_addr]) begin
-                    // Draw number in black
-                    vga_red <= 4'h0;
-                    vga_green <= 4'h0;
-                    vga_blue <= 4'h0;
-                end else begin
-                    // Draw card (white with black border)
-                    if (x_pos == player_positions_x[current_card_value] ||
-                        x_pos == player_positions_x[current_card_value] + CARD_WIDTH - 1 ||
-                        y_pos == PLAYER_Y ||
-                        y_pos == PLAYER_Y + CARD_HEIGHT - 1) begin
-                        // Black border
-                        vga_red <= 4'h0;
-                        vga_green <= 4'h0;
-                        vga_blue <= 4'h0;
-                    end else begin
-                        // White interior
-                        vga_red <= 4'hF;
-                        vga_green <= 4'hF;
-                        vga_blue <= 4'hF;
-                    end
-                end
-            end else begin
-                // Draw background (dark green)
-                vga_red <= 4'h0;
-                vga_green <= 4'h8;
-                vga_blue <= 4'h0;
-            end
-        end else begin
-            // Blanking period
-            vga_red <= 4'h0;
-            vga_green <= 4'h0;
-            vga_blue <= 4'h0;
-        end
-    end
-end
-
+    // connect to VGA controller
+    vga_adapter VGA (
+			.resetn(KEY[0]),
+			.clock(CLOCK_50),
+			.colour(VGA_COLOR),
+			.x(VGA_X),
+			.y(VGA_Y),
+			.plot(~KEY[3]),
+			.VGA_R(VGA_R),
+			.VGA_G(VGA_G),
+			.VGA_B(VGA_B),
+			.VGA_HS(VGA_HS),
+			.VGA_VS(VGA_VS),
+			.VGA_BLANK_N(VGA_BLANK_N),
+			.VGA_SYNC_N(VGA_SYNC_N),
+			.VGA_CLK(VGA_CLK));
+		defparam VGA.RESOLUTION = "160x120";
+		defparam VGA.MONOCHROME = "FALSE";
+		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
+		defparam VGA.BACKGROUND_IMAGE = "blackjack_table.mif";
 endmodule
 
-// Game state RAM module
-module blackjack_game_ram #(
-    parameter CURRENCY_BITS = 16,
-    parameter MAX_CARDS = 7
-)(
-    input wire clk,
-    input wire rst,
-    input wire [3:0] addr,
-    input wire [CURRENCY_BITS-1:0] write_data,
-    input wire write_en,
-    output reg [CURRENCY_BITS-1:0] read_data
+module regn(R, Resetn, E, Clock, Q);
+    parameter n = 8;
+    input [n-1:0] R;
+    input Resetn, E, Clock;
+    output reg [n-1:0] Q;
+
+    always @(posedge Clock)
+        if (!Resetn)
+            Q <= 0;
+        else if (E)
+            Q <= R;
+endmodule
+
+module count (Clock, Resetn, E, Q);
+    parameter n = 8;
+    input Clock, Resetn, E;
+    output reg [n-1:0] Q;
+
+    always @ (posedge Clock)
+        if (Resetn == 0)
+            Q <= 0;
+        else if (E)
+              Q <= Q + 1;
+endmodule
+
+module d_latch(
+	input [3:0] D,
+	input en,
+	input reset,
+	output reg [3:0] Q
 );
 
-// Memory map
-localparam
-    ADDR_PLAYER_BALANCE = 4'h0,
-    ADDR_CURRENT_BET = 4'h1,
-    ADDR_PLAYER_CARD_COUNT = 4'h2,
-    ADDR_DEALER_CARD_COUNT = 4'h3,
-    ADDR_PLAYER_CARDS_START = 4'h4,
-    ADDR_DEALER_CARDS_START = 4'h4 + MAX_CARDS;
+always @ (en or reset or D)
+	if (!reset)
+		Q <= 4'b0;
+	else if (en)
+		Q <= D;
+endmodule
 
-// Memory array
-reg [CURRENCY_BITS-1:0] ram [0:15];
+module hex7seg (hex, display);
+    input [3:0] hex;
+    output [6:0] display;
 
-// Write operation
-always @(posedge clk) begin
-    if (rst) begin
-        // Initialize memory
-        ram[ADDR_PLAYER_BALANCE] <= 1000;  // Starting balance
-        ram[ADDR_CURRENT_BET] <= 0;
-        ram[ADDR_PLAYER_CARD_COUNT] <= 0;
-        ram[ADDR_DEALER_CARD_COUNT] <= 0;
-        for (integer i = 0; i < MAX_CARDS; i = i + 1) begin
-            ram[ADDR_PLAYER_CARDS_START + i] <= 0;
-            ram[ADDR_DEALER_CARDS_START + i] <= 0;
-        end
-    end else if (write_en) begin
-        ram[addr] <= write_data;
-    end
-end
+    reg [6:0] display;
 
-// Read operation
-always @(posedge clk) begin
-    read_data <= ram[addr];
-end
-
+    /*
+     *       0  
+     *      ---  
+     *     |   |
+     *    5|   |1
+     *     | 6 |
+     *      ---  
+     *     |   |
+     *    4|   |2
+     *     |   |
+     *      ---  
+     *       3  
+     */
+    always @ (hex)
+        case (hex)
+            4'h0: display = 7'b1000000;
+            4'h1: display = 7'b1111001;
+            4'h2: display = 7'b0100100;
+            4'h3: display = 7'b0110000;
+            4'h4: display = 7'b0011001;
+            4'h5: display = 7'b0010010;
+            4'h6: display = 7'b0000010;
+            4'h7: display = 7'b1111000;
+            4'h8: display = 7'b0000000;
+            4'h9: display = 7'b0011000;
+            4'hA: display = 7'b0001000;
+            4'hB: display = 7'b0000011;
+            4'hC: display = 7'b1000110;
+            4'hD: display = 7'b0100001;
+            4'hE: display = 7'b0000110;
+            4'hF: display = 7'b0001110;
+        endcase
 endmodule
