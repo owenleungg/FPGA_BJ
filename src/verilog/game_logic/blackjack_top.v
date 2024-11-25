@@ -5,18 +5,27 @@ module blackjack_top (
 
     // Clock and Reset
     input wire CLOCK_50,
-    input wire [0:0] KEY,         // KEY[0] is reset, active-low
+    input wire [3:0] KEY,         
 
     // Display outputs
-    output wire [6:0] HEX0,        // Player score ones digit
-    output wire [6:0] HEX1,        // Player score tens digit
-    output wire [6:0] HEX2,        // Dealer score ones digit
-    output wire [6:0] HEX3,        // Dealer score tens digit
-    output wire [6:0] HEX4,        // Status display (P/d/b/t)
-    output wire [6:0] HEX5,        // Game state indicator
-    output wire [9:0] LEDR         // Debug display for PS2
-);
+    output wire [6:0] HEX0,        
+    output wire [6:0] HEX1,        
+    output wire [6:0] HEX2,        
+    output wire [6:0] HEX3,        
+    output wire [6:0] HEX4,        
+    output wire [6:0] HEX5,        
+    output wire [9:0] LEDR,        
 
+    // VGA outputs
+    output [7:0] VGA_R,      
+    output [7:0] VGA_G,      
+    output [7:0] VGA_B,      
+    output VGA_HS,           
+    output VGA_VS,           
+    output VGA_BLANK_N,      
+    output VGA_SYNC_N,       
+    output VGA_CLK           
+);
     // Internal connections
     wire [3:0] card_value;
     wire [4:0] player_score, dealer_score;
@@ -24,40 +33,38 @@ module blackjack_top (
     wire hit_pressed, stand_pressed, deal_pressed;
     wire [3:0] player_ones, player_tens, dealer_ones, dealer_tens;
     wire show_dealer_first;
+    //wire dealer_turn;
+    
+    // Initial card values
+    wire [3:0] dealer_init_card_1;
+    wire [3:0] dealer_init_card_2;
+    wire [3:0] player_init_card_1;
+    wire [3:0] player_init_card_2;
+	 
+	 wire deal_player_card_1;
 
-    // Instantiate the PS/2 module 
+    // Assign dealer_turn based on game state
+    assign dealer_turn = (game_state == 3'b011); // DEALER_TURN state
+     
+    // PS2 controller
     blackjack_ps2 ps2_inst (
         .PS2_CLK(PS2_CLK),
         .PS2_DAT(PS2_DAT),
         .CLOCK_50(CLOCK_50),
-        .reset(~KEY[0]),           // Active-high reset to PS2 controller 
+        .reset(~KEY[0]),          
         .hit_pressed(hit_pressed),
         .stand_pressed(stand_pressed),
-        .deal_pressed(deal_pressed),
-        .LEDR(LEDR)
+        .deal_pressed(deal_pressed)
     );
 
-
-    // // Button debouncer
-    // button_debouncer debouncer_inst (
-    //     .clk(CLOCK_50),
-    //     .rst_n(KEY[2]), 
-    //     .key_hit(KEY[0]),
-    //     .key_stand(KEY[1]),
-    //     .key_deal(KEY[3]),
-    //     .hit_pressed(hit_pressed),
-    //     .stand_pressed(stand_pressed),
-    //     .deal_pressed(deal_pressed)
-    // );
-
-    // RNG Module
+    // Card RNG
     card_rng rng_inst (
         .clk(CLOCK_50),
         .rst_n(KEY[0]), 
         .card_value(card_value)
     );
 
-    // Main game FSM
+    // Game FSM
     blackjack_fsm fsm_inst (
         .clk(CLOCK_50),
         .rst_n(KEY[0]),   
@@ -68,10 +75,11 @@ module blackjack_top (
         .player_score(player_score),
         .dealer_score(dealer_score),
         .game_state(game_state),
-        .show_dealer_first(show_dealer_first)
+        .show_dealer_first(show_dealer_first),
+		  .deal_player_card_1(deal_player_card_1)
     );
 
-    // Score to digit converter
+    // Score converter
     score_converter score_conv_inst (
         .player_score(player_score),
         .dealer_score(dealer_score),
@@ -82,7 +90,7 @@ module blackjack_top (
         .dealer_tens(dealer_tens)
     );
 
-    // Display modules
+    // Display controller
     display_controller display_inst (
         .game_state(game_state),
         .player_score(player_score),
@@ -99,4 +107,22 @@ module blackjack_top (
         .HEX5(HEX5)
     );
 
+    // VGA controller
+    vga_blackjack vga_inst (
+        .CLOCK_50(CLOCK_50),                     
+        .hit_pressed(hit_pressed),    
+        .deal_pressed(deal_pressed),   
+        .card_value(card_value),  
+        .KEY(KEY[0]),       
+        .VGA_R(VGA_R),             
+        .VGA_G(VGA_G),           
+        .VGA_B(VGA_B),             
+        .VGA_HS(VGA_HS),          
+        .VGA_VS(VGA_VS),           
+        .VGA_BLANK_N(VGA_BLANK_N), 
+        .VGA_SYNC_N(VGA_SYNC_N),   
+        .VGA_CLK(VGA_CLK),    
+        .LEDR(LEDR),
+        .game_state(game_state)   
+    );
 endmodule

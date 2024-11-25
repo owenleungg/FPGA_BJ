@@ -1,4 +1,3 @@
-// RNG Module for card generation with active-low reset
 module card_rng (
     input wire clk,
     input wire rst_n,             // Active-low reset

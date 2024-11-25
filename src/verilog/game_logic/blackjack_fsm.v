@@ -9,7 +9,14 @@ module blackjack_fsm (
     output reg [4:0] player_score,
     output reg [4:0] dealer_score,
     output reg [2:0] game_state,
-    output reg show_dealer_first
+    output reg show_dealer_first,
+	 output reg [3:0] dealer_init_card_1,
+	 output reg [3:0] dealer_init_card_2,
+	 output reg [3:0] player_init_card_1,
+	 output reg [3:0] player_init_card_2,
+	 output reg deal_player_card_1,
+	 output reg deal_player_card_2
+	 
 );
     // State definitions
     localparam IDLE = 3'b000;
@@ -57,7 +64,7 @@ module blackjack_fsm (
         .new_has_ace(dealer_new_has_ace),
         .new_ace_converted(dealer_new_ace_converted)
     );
-
+	 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin // active low reset 
             game_state <= IDLE;
@@ -91,6 +98,8 @@ module blackjack_fsm (
                         show_dealer_first <= 1'b0;
                         dealing_complete <= 1'b0;
                         player_busted <= 1'b0;
+								deal_player_card_1 <= 1'b0;
+								deal_player_card_2 <= 1'b0;
                     end
                 end
 
@@ -98,6 +107,8 @@ module blackjack_fsm (
                     if (!dealing_complete) begin
                         case (cards_dealt)
                             3'd0: begin  // First player card
+                                player_init_card_1 <= card_value;
+										  deal_player_card_1 <= 1'b1;
                                 player_first_two <= player_adjusted_score;
                                 player_score <= player_adjusted_score;
                                 player_has_ace <= player_new_has_ace;
@@ -105,6 +116,7 @@ module blackjack_fsm (
                                 cards_dealt <= cards_dealt + 1'b1;
                             end
                             3'd1: begin  // First dealer card
+                                dealer_init_card_1 <= card_value;
                                 dealer_first_two <= dealer_adjusted_score;
                                 dealer_score <= dealer_adjusted_score;
                                 dealer_has_ace <= dealer_new_has_ace;
@@ -113,6 +125,8 @@ module blackjack_fsm (
                                 show_dealer_first <= 1'b1;
                             end
                             3'd2: begin  // Second player card
+                                player_init_card_2 <= card_value;
+										  //deal_player_card_2 <= 1'b1;
                                 player_first_two <= player_adjusted_score;
                                 player_score <= player_adjusted_score;
                                 player_has_ace <= player_new_has_ace;
@@ -120,29 +134,34 @@ module blackjack_fsm (
                                 cards_dealt <= cards_dealt + 1'b1;
                             end
                             3'd3: begin  // Second dealer card
+                                dealer_init_card_2 <= card_value;
                                 dealer_first_two <= dealer_adjusted_score;
                                 dealer_score <= dealer_adjusted_score;
                                 dealer_has_ace <= dealer_new_has_ace;
                                 dealer_ace_converted <= dealer_new_ace_converted;
                                 dealing_complete <= 1'b1;
+                                cards_dealt <= cards_dealt + 1'b1; 
                             end
                         endcase
                     end
                     else begin
-                        // Check for initial blackjack
-                        if (player_first_two == 5'd21) begin
-                            if (dealer_first_two == 5'd21)
-                                game_state <= GAME_OVER;  // Push
+							  deal_player_card_1 <= 1'b0;
+	
+                        if (cards_dealt == 3'd4) begin  
+                            // Check for initial blackjack
+                            if (player_first_two == 5'd21) begin
+                                if (dealer_first_two == 5'd21)
+                                    game_state <= GAME_OVER;  // Push
+                                else
+                                    game_state <= GAME_OVER;  // Player wins with blackjack
+                            end
+                            else if (dealer_first_two == 5'd21)
+                                game_state <= GAME_OVER;  // Dealer wins with blackjack
                             else
-                                game_state <= GAME_OVER;  // Player wins with blackjack
+                                game_state <= PLAYER_TURN;
                         end
-                        else if (dealer_first_two == 5'd21)
-                            game_state <= GAME_OVER;  // Dealer wins with blackjack
-                        else
-                            game_state <= PLAYER_TURN;
                     end
                 end
-
                 PLAYER_TURN: begin
                     if (hit_pressed && player_score < 21) begin  // Added score check
                         player_score <= player_adjusted_score;
@@ -189,10 +208,10 @@ module ace_score_adjuster (
     input wire [4:0] current_score,
     input wire [3:0] new_card,
     input wire has_ace,
-    input wire ace_converted,  // New input to track if ace was already converted
+    input wire ace_converted,  
     output reg [4:0] adjusted_score,
     output reg new_has_ace,
-    output reg new_ace_converted  // New output to track ace conversion
+    output reg new_ace_converted 
 );
     always @(*) begin
         // Default: maintain current status
@@ -294,3 +313,5 @@ module display_controller (
                   (game_state == 3'b011) ? 7'b0011001 :      // 4 (DEALER_TURN)
                   7'b0010010;                                 // 5 (GAME_OVER)
 endmodule
+
+
