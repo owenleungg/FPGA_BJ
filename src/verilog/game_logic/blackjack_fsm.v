@@ -31,8 +31,8 @@ module blackjack_fsm (
     reg [4:0] dealer_first_two;
     reg player_has_ace;
     reg dealer_has_ace;
-    reg player_ace_converted;  // New register
-    reg dealer_ace_converted;  // New register
+    reg player_ace_converted;  
+    reg dealer_ace_converted;  
     reg dealing_complete;
     reg player_busted;
     
@@ -66,7 +66,7 @@ module blackjack_fsm (
     );
 	 
     always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin // active low reset 
+        if (!rst_n) begin 
             game_state <= IDLE;
             player_score <= 5'd0;
             dealer_score <= 5'd0;
@@ -126,7 +126,7 @@ module blackjack_fsm (
                             end
                             3'd2: begin  // Second player card
                                 player_init_card_2 <= card_value;
-										  //deal_player_card_2 <= 1'b1;
+								//deal_player_card_2 <= 1'b1;
                                 player_first_two <= player_adjusted_score;
                                 player_score <= player_adjusted_score;
                                 player_has_ace <= player_new_has_ace;
@@ -163,7 +163,7 @@ module blackjack_fsm (
                     end
                 end
                 PLAYER_TURN: begin
-                    if (hit_pressed && player_score < 21) begin  // Added score check
+                    if (hit_pressed && player_score < 21) begin 
                         player_score <= player_adjusted_score;
                         player_has_ace <= player_new_has_ace;
                         player_ace_converted <= player_new_ace_converted;

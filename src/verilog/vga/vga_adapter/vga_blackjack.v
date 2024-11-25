@@ -27,10 +27,6 @@ module vga_blackjack (
     output wire [9:0] LEDR
 );
 
-    // =========================================================================
-    // Internal Signals and Parameters
-    // =========================================================================
-    
     // VGA Drawing Coordinates
     wire [7:0] X;           
     wire [6:0] Y;           
@@ -42,7 +38,6 @@ module vga_blackjack (
     wire [2:0] VGA_COLOR;
     
     // Card Colors (from memory)
-
 			// Diamonds
 				wire [2:0] ace_of_diamonds_color, two_of_diamonds_color, three_of_diamonds_color,
            four_of_diamonds_color, five_of_diamonds_color, six_of_diamonds_color,
@@ -73,16 +68,10 @@ module vga_blackjack (
     wire [6:0] card_y;
     wire [2:0] player_card_count;
     wire [2:0] dealer_card_count;
-	 wire dealer_turn;
-	 assign dealer_turn = (game_state == 3'b011) ? 1 : 0;
-
-
-    // =========================================================================
-    // Card Selection and Drawing Control
-    // =========================================================================
+	wire dealer_turn;
+	assign dealer_turn = (game_state == 3'b011) ? 1 : 0;
 
     wire hit_pressed_512;
-
     // Extend drawing pulse
     pulse_extender_512 p1(
         .clk(CLOCK_50),
@@ -99,7 +88,7 @@ module vga_blackjack (
 	
 	suit_rng suit_rng_inst(
 		 .clk(CLOCK_50),
-		 .rst_n(KEY[0]),             // Active-low reset
+		 .rst_n(KEY[0]),             
 		 .suit(suit)
 	 );
 	
@@ -131,10 +120,7 @@ module vga_blackjack (
         .card_x(card_x),
         .card_y(card_y)
     );
-    // =========================================================================
-    // VGA Control Logic
-    // =========================================================================
-    
+
     // Drawing counters
     count U3 (CLOCK_50, ~deal_pressed, Ex, XC);    
         defparam U3.n = 4;

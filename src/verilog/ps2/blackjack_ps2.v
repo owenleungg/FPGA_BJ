@@ -7,8 +7,8 @@ module blackjack_ps2 (
     
     output reg hit_pressed,
     output reg stand_pressed,
-    output reg deal_pressed,
-    output wire [9:0] LEDR
+    output reg deal_pressed
+    //output wire [9:0] LEDR
 );
 
     // Internal signals
@@ -17,7 +17,7 @@ module blackjack_ps2 (
     reg [7:0] last_data_received;
     reg waiting_for_break;
     
-    // Add state tracking for key handling
+    // state tracking for key handling
     reg [7:0] last_valid_key;
     reg key_handled;
 
@@ -39,7 +39,7 @@ module blackjack_ps2 (
             key_handled <= 1'b0;
         end
         else begin
-            // Default all signals to 0 every clock cycle
+            // all signals to 0 every clock cycle
             hit_pressed <= 1'b0;
             stand_pressed <= 1'b0;
             deal_pressed <= 1'b0;
@@ -53,7 +53,7 @@ module blackjack_ps2 (
                     waiting_for_break <= 1'b0;
                     last_valid_key <= 8'h00;
                 end
-                else if (!key_handled) begin  // Only process key if not already handled
+                else if (!key_handled) begin  
                     last_data_received <= ps2_key_data;
                     case (ps2_key_data)
                         H_KEY: begin 
@@ -74,8 +74,6 @@ module blackjack_ps2 (
         end
     end
 
-    // Debug display
-    assign LEDR = {key_handled, waiting_for_break, last_data_received};
 
     // PS2 Controller instance
     PS2_Controller PS2 (

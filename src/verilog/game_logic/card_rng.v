@@ -1,11 +1,11 @@
 module card_rng (
     input wire clk,
-    input wire rst_n,             // Active-low reset
+    input wire rst_n,          
     output reg [3:0] card_value
 );
 
   // Internal signals
-  reg [15:0] lfsr = 16'b00010;    // 16-bit LFSR 
+  reg [15:0] lfsr = 16'b00010;   
   wire feedback;
 
   // Taps positions for feedback
