@@ -1,3 +1,3 @@
 # FPGA_BJ
 Blackjack on a FPGA board
-![Blackjack Screenshot](blackjack.jpg)
+![Blackjack Screenshot](blackjack.png)
